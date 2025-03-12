@@ -187,25 +187,6 @@ func main() {
 	}
 }
 
-// func newService(db *sqlx.DB, authClient authn.Authentication, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (notifiers.Service, error) {
-// 	database := notifierpg.NewDatabase(db, tracer)
-// 	repo := tracing.New(tracer, notifierpg.New(database))
-// 	idp := ulid.New()
-
-// 	agent, err := email.New(&ec)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to create email agent: %s", err)
-// 	}
-
-// 	notifier := smtp.New(agent)
-// 	svc := notifiers.New(authClient, repo, idp, notifier, c.From)
-// 	svc = api.LoggingMiddleware(svc, logger)
-// 	counter, latency := prometheus.MakeMetrics("notifier", "smtp")
-// 	svc = api.MetricsMiddleware(svc, counter, latency)
-
-// 	return svc, nil
-// }
-
 func newService(db *sqlx.DB, authClient authn.Authentication, tracer trace.Tracer, c config, sc smpp.Config, logger *slog.Logger) notifiers.Service {
 	database := notifierpg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierpg.New(database))
