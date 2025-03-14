@@ -12,6 +12,10 @@ issues:
   exclude:
     - "string `Usage:\n` has (\\d+) occurrences, make it a constant"
     - "string `For example:\n` has (\\d+) occurrences, make it a constant"
+  exclude-dirs:
+    - twins/
+  exclude-files:
+    - cmd/twins/main.go
 
 linters-settings:
   importas:
@@ -20,15 +24,14 @@ linters-settings:
     alias:
       - pkg: github.com/absmach/callhome/pkg/client
         alias: chclient
-      - pkg: github.com/absmach/magistrala/logger
+      - pkg: github.com/absmach/supermq/logger
         alias: mglog
-      - pkg: github.com/absmach/magistrala/pkg/errors/service
+      - pkg: github.com/absmach/supermq/pkg/errors/service
         alias: svcerr
-      - pkg: github.com/absmach/magistrala/pkg/errors/repository
+      - pkg: github.com/absmach/supermq/pkg/errors/repository
         alias: repoerr
-      - pkg: github.com/absmach/magistrala/pkg/sdk/mocks
+      - pkg: github.com/absmach/supermq/pkg/sdk/mocks
         alias: sdkmocks
-
   gocritic:
     enabled-checks:
       - importShadow
@@ -84,8 +87,6 @@ linters:
     - dogsled
     - errchkjson
     - errname
-    - execinquery
-    - exportloopref
     - ginkgolinter
     - gocheckcompilerdirectives
     - gofumpt
