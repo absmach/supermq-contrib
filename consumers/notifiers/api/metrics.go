@@ -32,7 +32,7 @@ func MetricsMiddleware(svc notifiers.Service, counter metrics.Counter, latency m
 }
 
 // CreateSubscription instruments CreateSubscription method with metrics.
-func (ms *metricsMiddleware) CreateSubscription(ctx context.Context, session authn.Session, sub notifiers.Subscription) (string, error) {
+func (ms *metricsMiddleware) CreateSubscription(ctx context.Context, session authn.Session, sub notifiers.Subscription) (notifiers.Subscription, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_subscription").Add(1)
 		ms.latency.With("method", "create_subscription").Observe(time.Since(begin).Seconds())

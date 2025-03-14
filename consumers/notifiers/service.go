@@ -27,7 +27,7 @@ var _ consumers.AsyncConsumer = (*notifierService)(nil)
 type Service interface {
 	// CreateSubscription persists a subscription.
 	// Successful operation is indicated by non-nil error response.
-	CreateSubscription(ctx context.Context, session authn.Session, sub Subscription) (string, error)
+	CreateSubscription(ctx context.Context, session authn.Session, sub Subscription) (Subscription, error)
 
 	// ViewSubscription retrieves the subscription for the given user and id.
 	ViewSubscription(ctx context.Context, session authn.Session, id string) (Subscription, error)
@@ -62,18 +62,19 @@ func New(auth authn.Authentication, subs SubscriptionsRepository, idp supermq.ID
 	}
 }
 
-func (ns *notifierService) CreateSubscription(ctx context.Context, session authn.Session, sub Subscription) (string, error) {
+func (ns *notifierService) CreateSubscription(ctx context.Context, session authn.Session, sub Subscription) (Subscription, error) {
 	id, err := ns.idp.ID()
 	if err != nil {
-		return "", err
+		return Subscription{}, err
 	}
 	sub.ID = id
 	sub.OwnerID = session.UserID
-	id, err = ns.subs.Save(ctx, sub)
+	newSub, err := ns.subs.Save(ctx, sub)
 	if err != nil {
-		return "", errors.Wrap(svcerr.ErrCreateEntity, err)
+		return Subscription{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
-	return id, nil
+
+	return newSub, nil
 }
 
 func (ns *notifierService) ViewSubscription(ctx context.Context, session authn.Session, id string) (Subscription, error) {

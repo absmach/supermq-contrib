@@ -33,14 +33,12 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string, authn smqauthn.Authentication) http.Handler {
+func MakeHandler(svc notifiers.Service, r *chi.Mux, logger *slog.Logger, instanceID string, authn smqauthn.Authentication) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
-	mux := chi.NewRouter()
-
-	mux.Group(func(r chi.Router) {
+	r.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn, false))
 		r.Route("/subscriptions", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
@@ -80,10 +78,10 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string, 
 		})
 	})
 
-	mux.Get("/health", supermq.Health("notifier", instanceID))
-	mux.Handle("/metrics", promhttp.Handler())
+	r.Get("/health", supermq.Health("notifier", instanceID))
+	r.Handle("/metrics", promhttp.Handler())
 
-	return mux
+	return r
 }
 
 func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {

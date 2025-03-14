@@ -29,8 +29,8 @@ func New(db Database) notifiers.SubscriptionsRepository {
 	}
 }
 
-func (repo subscriptionsRepo) Save(ctx context.Context, sub notifiers.Subscription) (string, error) {
-	q := `INSERT INTO subscriptions (id, owner_id, contact, topic) VALUES (:id, :owner_id, :contact, :topic) RETURNING id`
+func (repo subscriptionsRepo) Save(ctx context.Context, sub notifiers.Subscription) (notifiers.Subscription, error) {
+	q := `INSERT INTO subscriptions (id, owner_id, contact, topic) VALUES (:id, :owner_id, :contact, :topic) RETURNING id, owner_id, contact, topic`
 
 	dbSub := dbSubscription{
 		ID:      sub.ID,
@@ -42,13 +42,23 @@ func (repo subscriptionsRepo) Save(ctx context.Context, sub notifiers.Subscripti
 	row, err := repo.db.NamedQueryContext(ctx, q, dbSub)
 	if err != nil {
 		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
-			return "", errors.Wrap(repoerr.ErrConflict, err)
+			return notifiers.Subscription{}, errors.Wrap(repoerr.ErrConflict, err)
 		}
-		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
+		return notifiers.Subscription{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 	defer row.Close()
 
-	return sub.ID, nil
+	var newSub notifiers.Subscription
+	if row.Next() {
+		dbSub := dbSubscription{}
+		if err := row.StructScan(&dbSub); err != nil {
+			return notifiers.Subscription{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		}
+
+		newSub = fromDBSub(dbSub)
+	}
+
+	return newSub, nil
 }
 
 func (repo subscriptionsRepo) Retrieve(ctx context.Context, id string) (notifiers.Subscription, error) {

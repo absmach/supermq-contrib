@@ -91,22 +91,22 @@ func (_m *SubscriptionsRepository) RetrieveAll(ctx context.Context, pm notifiers
 }
 
 // Save provides a mock function with given fields: ctx, sub
-func (_m *SubscriptionsRepository) Save(ctx context.Context, sub notifiers.Subscription) (string, error) {
+func (_m *SubscriptionsRepository) Save(ctx context.Context, sub notifiers.Subscription) (notifiers.Subscription, error) {
 	ret := _m.Called(ctx, sub)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
 	}
 
-	var r0 string
+	var r0 notifiers.Subscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, notifiers.Subscription) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, notifiers.Subscription) (notifiers.Subscription, error)); ok {
 		return rf(ctx, sub)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, notifiers.Subscription) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, notifiers.Subscription) notifiers.Subscription); ok {
 		r0 = rf(ctx, sub)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Get(0).(notifiers.Subscription)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, notifiers.Subscription) error); ok {

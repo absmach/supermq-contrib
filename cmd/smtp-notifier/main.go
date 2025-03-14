@@ -35,6 +35,7 @@ import (
 	"github.com/absmach/supermq/pkg/ulid"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v10"
+	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -166,7 +167,9 @@ func main() {
 		return
 	}
 
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID, authn), logger)
+	mux := chi.NewRouter()
+
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, mux, logger, cfg.InstanceID, authn), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, supermq.Version, logger, cancel)

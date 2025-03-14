@@ -28,13 +28,13 @@ func LoggingMiddleware(svc notifiers.Service, logger *slog.Logger) notifiers.Ser
 
 // CreateSubscription logs the create_subscription request. It logs subscription ID and topic and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) CreateSubscription(ctx context.Context, session authn.Session, sub notifiers.Subscription) (id string, err error) {
+func (lm *loggingMiddleware) CreateSubscription(ctx context.Context, session authn.Session, sub notifiers.Subscription) (newSub notifiers.Subscription, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.Group("subscription",
 				slog.String("topic", sub.Topic),
-				slog.String("id", id),
+				slog.String("id", sub.ID),
 			),
 		}
 		if err != nil {

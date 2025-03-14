@@ -26,10 +26,17 @@ import (
 
 const (
 	total        = 100
-	exampleUser1 = "token1"
-	exampleUser2 = "token2"
+	exampleUser1 = "user1"
+	exampleUser2 = "user2"
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
+
+var subscription = notifiers.Subscription{
+	ID:      validID,
+	OwnerID: validID,
+	Contact: exampleUser1,
+	Topic:   "valid.topic",
+}
 
 func newService() (notifiers.Service, *authnmocks.Authentication, *mocks.SubscriptionsRepository) {
 	repo := new(mocks.SubscriptionsRepository)
@@ -45,47 +52,39 @@ func TestCreateSubscription(t *testing.T) {
 
 	cases := []struct {
 		desc            string
-		token           string
+		session         smqauthn.Session
 		sub             notifiers.Subscription
-		id              string
 		err             error
 		authenticateErr error
 		userID          string
 	}{
 		{
 			desc:            "test success",
-			token:           exampleUser1,
+			session:         smqauthn.Session{UserID: validID},
 			sub:             notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
-			id:              uuid.Prefix + fmt.Sprintf("%012d", 1),
 			err:             nil,
 			authenticateErr: nil,
 			userID:          validID,
 		},
 		{
 			desc:            "test already existing",
-			token:           exampleUser1,
+			session:         smqauthn.Session{UserID: validID},
 			sub:             notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
-			id:              "",
 			err:             repoerr.ErrConflict,
 			authenticateErr: nil,
 			userID:          validID,
 		},
-		{
-			desc:            "test with empty token",
-			token:           "",
-			sub:             notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
-			id:              "",
-			err:             svcerr.ErrAuthentication,
-			authenticateErr: svcerr.ErrAuthentication,
-		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
-		repoCall1 := repo.On("Save", context.Background(), mock.Anything).Return(tc.id, tc.err)
-		id, err := svc.CreateSubscription(context.Background(), tc.token, tc.sub)
+		repoCall := auth.On("Authenticate", context.Background(), tc.session).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		repoCall1 := repo.On("Save", context.Background(), mock.Anything).Return(tc.sub, tc.err)
+		expected, err := svc.CreateSubscription(context.Background(), tc.session, tc.sub)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.id, id))
+		if err == nil {
+			assert.Equal(t, tc.sub, expected, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.sub, expected))
+		}
+
 		repoCall.Unset()
 		repoCall1.Unset()
 	}
@@ -102,7 +101,7 @@ func TestViewSubscription(t *testing.T) {
 
 	cases := []struct {
 		desc            string
-		token           string
+		session         smqauthn.Session
 		id              string
 		sub             notifiers.Subscription
 		err             error
@@ -111,7 +110,7 @@ func TestViewSubscription(t *testing.T) {
 	}{
 		{
 			desc:            "test success",
-			token:           exampleUser1,
+			session:         smqauthn.Session{UserID: validID},
 			id:              validID,
 			sub:             sub,
 			err:             nil,
@@ -120,27 +119,19 @@ func TestViewSubscription(t *testing.T) {
 		},
 		{
 			desc:            "test not existing",
-			token:           exampleUser1,
+			session:         smqauthn.Session{UserID: validID},
 			id:              "not_exist",
 			sub:             notifiers.Subscription{},
 			err:             svcerr.ErrNotFound,
 			authenticateErr: nil,
 			userID:          validID,
 		},
-		{
-			desc:            "test with empty token",
-			token:           "",
-			id:              validID,
-			sub:             notifiers.Subscription{},
-			err:             svcerr.ErrAuthentication,
-			authenticateErr: svcerr.ErrAuthentication,
-		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		repoCall := auth.On("Authenticate", context.Background(), tc.session).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall1 := repo.On("Retrieve", context.Background(), tc.id).Return(tc.sub, tc.err)
-		sub, err := svc.ViewSubscription(context.Background(), tc.token, tc.id)
+		sub, err := svc.ViewSubscription(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.sub, sub, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.sub, sub))
 		repoCall.Unset()
@@ -172,7 +163,7 @@ func TestListSubscriptions(t *testing.T) {
 
 	cases := []struct {
 		desc            string
-		token           string
+		session         smqauthn.Session
 		pageMeta        notifiers.PageMetadata
 		page            notifiers.Page
 		err             error
@@ -180,8 +171,8 @@ func TestListSubscriptions(t *testing.T) {
 		userID          string
 	}{
 		{
-			desc:  "test success",
-			token: exampleUser1,
+			desc:    "test success",
+			session: smqauthn.Session{UserID: validID},
 			pageMeta: notifiers.PageMetadata{
 				Offset: 0,
 				Limit:  3,
@@ -199,8 +190,8 @@ func TestListSubscriptions(t *testing.T) {
 			userID:          validID,
 		},
 		{
-			desc:  "test not existing",
-			token: exampleUser1,
+			desc:    "test not existing",
+			session: smqauthn.Session{UserID: validID},
 			pageMeta: notifiers.PageMetadata{
 				Limit:   10,
 				Contact: "empty@example.com",
@@ -210,21 +201,10 @@ func TestListSubscriptions(t *testing.T) {
 			authenticateErr: nil,
 			userID:          validID,
 		},
+
 		{
-			desc:  "test with empty token",
-			token: "",
-			pageMeta: notifiers.PageMetadata{
-				Offset: 2,
-				Limit:  12,
-				Topic:  "topic.subtopic.13",
-			},
-			page:            notifiers.Page{},
-			err:             svcerr.ErrAuthentication,
-			authenticateErr: svcerr.ErrAuthentication,
-		},
-		{
-			desc:  "test with topic",
-			token: exampleUser1,
+			desc:    "test with topic",
+			session: smqauthn.Session{UserID: validID},
 			pageMeta: notifiers.PageMetadata{
 				Limit: 10,
 				Topic: fmt.Sprintf("%s.%d", topic, 4),
@@ -242,8 +222,8 @@ func TestListSubscriptions(t *testing.T) {
 			userID:          validID,
 		},
 		{
-			desc:  "test with contact and offset",
-			token: exampleUser1,
+			desc:    "test with contact and offset",
+			session: smqauthn.Session{UserID: validID},
 			pageMeta: notifiers.PageMetadata{
 				Offset:  10,
 				Limit:   10,
@@ -265,9 +245,9 @@ func TestListSubscriptions(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		repoCall := auth.On("Authenticate", context.Background(), tc.session).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall1 := repo.On("RetrieveAll", context.Background(), tc.pageMeta).Return(tc.page, tc.err)
-		page, err := svc.ListSubscriptions(context.Background(), tc.token, tc.pageMeta)
+		page, err := svc.ListSubscriptions(context.Background(), tc.session, tc.pageMeta)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.page, page, fmt.Sprintf("%s: got unexpected page\n", tc.desc))
 		repoCall.Unset()
@@ -283,7 +263,7 @@ func TestRemoveSubscription(t *testing.T) {
 
 	cases := []struct {
 		desc            string
-		token           string
+		session         smqauthn.Session
 		id              string
 		err             error
 		authenticateErr error
@@ -291,7 +271,7 @@ func TestRemoveSubscription(t *testing.T) {
 	}{
 		{
 			desc:            "test success",
-			token:           exampleUser1,
+			session:         smqauthn.Session{UserID: validID},
 			id:              sub.ID,
 			err:             nil,
 			authenticateErr: nil,
@@ -299,25 +279,18 @@ func TestRemoveSubscription(t *testing.T) {
 		},
 		{
 			desc:            "test not existing",
-			token:           exampleUser1,
+			session:         smqauthn.Session{UserID: validID},
 			id:              "not_exist",
 			err:             svcerr.ErrNotFound,
 			authenticateErr: nil,
 			userID:          validID,
 		},
-		{
-			desc:            "test with empty token",
-			token:           "",
-			id:              sub.ID,
-			err:             svcerr.ErrAuthentication,
-			authenticateErr: svcerr.ErrAuthentication,
-		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		repoCall := auth.On("Authenticate", context.Background(), tc.session).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall1 := repo.On("Remove", context.Background(), tc.id).Return(tc.err)
-		err := svc.RemoveSubscription(context.Background(), tc.token, tc.id)
+		err := svc.RemoveSubscription(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
