@@ -7,7 +7,6 @@ toolchain go1.23.5
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
-	github.com/absmach/magistrala v0.15.1
 	github.com/absmach/senml v1.0.6
 	github.com/absmach/supermq v0.16.1-0.20250128110710-53cb10bb8983
 	github.com/caarlos0/env/v10 v10.0.0

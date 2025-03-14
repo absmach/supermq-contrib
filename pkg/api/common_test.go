@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala"
+	"github.com/absmach/supermq"
 	"github.com/absmach/supermq-contrib/pkg/api"
 	"github.com/absmach/supermq-contrib/pkg/testsutil"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var _ magistrala.Response = (*response)(nil)
+var _ supermq.Response = (*response)(nil)
 
 var validUUID = testsutil.GenerateUUID(&testing.T{})
 

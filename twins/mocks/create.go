@@ -17,7 +17,7 @@ var (
 	id        = 0
 )
 
-// CreateMessage creates Magistrala message using SenML record array.
+// CreateMessage creates SupeMQ message using SenML record array.
 func CreateMessage(attr twins.Attribute, recs []senml.Record) (*messaging.Message, error) {
 	mRecs, err := json.Marshal(recs)
 	if err != nil {

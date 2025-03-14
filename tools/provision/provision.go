@@ -17,6 +17,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/0x6flab/namegenerator"
@@ -30,19 +31,20 @@ const (
 
 var namesgenerator = namegenerator.NewGenerator()
 
-// MgConn - structure describing Magistrala connection set.
+// MgConn - structure describing SuperMQ connection set.
 type MgConn struct {
-	ChannelID string
-	ThingID   string
-	ThingKey  string
-	MTLSCert  string
-	MTLSKey   string
+	ClientID     string
+	ClinetSecret string
+	ChannelID    string
+	MTLSCert     string
+	MTLSKey      string
 }
 
 // Config - provisioning configuration.
 type Config struct {
 	Host     string
 	Username string
+	Email    string
 	Password string
 	Num      int
 	SSL      bool
@@ -60,11 +62,9 @@ func Provision(conf Config) error {
 
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
-		ThingsURL:       conf.Host,
+		ClientsURL:      conf.Host,
 		UsersURL:        conf.Host,
-		ReaderURL:       defReaderURL,
 		HTTPAdapterURL:  fmt.Sprintf("%s/http", conf.Host),
-		BootstrapURL:    conf.Host,
 		CertsURL:        conf.Host,
 		MsgContentType:  sdk.ContentType(msgContentType),
 		TLSVerification: false,
@@ -73,14 +73,15 @@ func Provision(conf Config) error {
 	s := sdk.NewSDK(sdkConf)
 
 	user := sdk.User{
+		Email: conf.Email,
 		Credentials: sdk.Credentials{
-			Identity: conf.Username,
+			Username: conf.Username,
 			Secret:   conf.Password,
 		},
 	}
 
-	if user.Credentials.Identity == "" {
-		user.Credentials.Identity = fmt.Sprintf("%s@email.com", namesgenerator.Generate())
+	if user.Email == "" {
+		user.Email = fmt.Sprintf("%s@email.com", namesgenerator.Generate())
 		user.Credentials.Secret = defPass
 	}
 
@@ -92,9 +93,30 @@ func Provision(conf Config) error {
 	var err error
 
 	// Login user
-	token, err := s.CreateToken(sdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret})
+	token, err := s.CreateToken(sdk.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
 	if err != nil {
 		return fmt.Errorf("unable to login user: %s", err.Error())
+	}
+
+	// Create new domain
+	dname := fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate())
+	domain := sdk.Domain{
+		Name:       dname,
+		Alias:      strings.ToLower(dname),
+		Permission: "admin",
+	}
+
+	domain, err = s.CreateDomain(domain, token.AccessToken)
+	if err != nil {
+		return fmt.Errorf("unable to create domain: %w", err)
+	}
+	// Login to domain
+	token, err = s.CreateToken(sdk.Login{
+		Username: user.Credentials.Username,
+		Password: user.Credentials.Secret,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to login user: %w", err)
 	}
 
 	var tlsCert tls.Certificate
@@ -122,27 +144,27 @@ func Provision(conf Config) error {
 		}
 	}
 
-	//  Create things and channels
-	things := make([]sdk.Thing, conf.Num)
+	//  Create clients and channels
+	clients := make([]sdk.Client, conf.Num)
 	channels := make([]sdk.Channel, conf.Num)
 	cIDs := []string{}
 	tIDs := []string{}
 
-	fmt.Println("# List of things that can be connected to MQTT broker")
+	fmt.Println("# List of clients that can be connected to MQTT broker")
 
 	for i := 0; i < conf.Num; i++ {
-		things[i] = sdk.Thing{Name: fmt.Sprintf("%s-thing-%d", conf.Prefix, i)}
+		clients[i] = sdk.Client{Name: fmt.Sprintf("%s-client-%d", conf.Prefix, i)}
 		channels[i] = sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
-	things, err = s.CreateThings(things, token.AccessToken)
+	clients, err = s.CreateClients(clients, domain.ID, token.AccessToken)
 	if err != nil {
-		return fmt.Errorf("failed to create the things: %s", err.Error())
+		return fmt.Errorf("failed to create the clients: %s", err.Error())
 	}
 
 	var chs []sdk.Channel
 	for _, c := range channels {
-		c, err = s.CreateChannel(c, token.AccessToken)
+		c, err = s.CreateChannel(c, domain.ID, token.AccessToken)
 		if err != nil {
 			return fmt.Errorf("failed to create the chennels: %s", err.Error())
 		}
@@ -150,7 +172,7 @@ func Provision(conf Config) error {
 	}
 	channels = chs
 
-	for _, t := range things {
+	for _, t := range clients {
 		tIDs = append(tIDs, t.ID)
 	}
 
@@ -182,9 +204,9 @@ func Provision(conf Config) error {
 			tmpl := x509.Certificate{
 				SerialNumber: serialNumber,
 				Subject: pkix.Name{
-					Organization:       []string{"Magistrala"},
-					CommonName:         things[i].Credentials.Secret,
-					OrganizationalUnit: []string{"magistrala"},
+					Organization:       []string{"SuperMQ"},
+					CommonName:         clients[i].Credentials.Secret,
+					OrganizationalUnit: []string{"supermq"},
 				},
 				NotBefore: notBefore,
 				NotAfter:  notAfter,
@@ -217,7 +239,7 @@ func Provision(conf Config) error {
 		}
 
 		// Print output
-		fmt.Printf("[[things]]\nthing_id = \"%s\"\nthing_key = \"%s\"\n", things[i].ID, things[i].Credentials.Secret)
+		fmt.Printf("[[clients]]\nclient_id = \"%s\"\nclient_key = \"%s\"\n", clients[i].ID, clients[i].Credentials.Secret)
 		if conf.SSL {
 			fmt.Printf("mtls_cert = \"\"\"%s\"\"\"\n", cert)
 			fmt.Printf("mtls_key = \"\"\"%s\"\"\"\n", key)
@@ -225,8 +247,8 @@ func Provision(conf Config) error {
 		fmt.Println("")
 	}
 
-	fmt.Printf("# List of channels that things can publish to\n" +
-		"# each channel is connected to each thing from things list\n")
+	fmt.Printf("# List of channels that clients can publish to\n" +
+		"# each channel is connected to each client from clients list\n")
 	for i := 0; i < conf.Num; i++ {
 		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", cIDs[i])
 	}
@@ -234,11 +256,12 @@ func Provision(conf Config) error {
 	for _, cID := range cIDs {
 		for _, tID := range tIDs {
 			conIDs := sdk.Connection{
-				ThingID:   tID,
-				ChannelID: cID,
+				ClientIDs:  []string{tID},
+				ChannelIDs: []string{cID},
+				Types:      []string{"publish", "subscribe"},
 			}
-			if err := s.Connect(conIDs, token.AccessToken); err != nil {
-				log.Fatalf("Failed to connect things %s to channels %s: %s", tID, cID, err)
+			if err := s.Connect(conIDs, domain.ID, token.AccessToken); err != nil {
+				log.Fatalf("Failed to connect clients %s to channels %s: %s", tID, cID, err)
 			}
 		}
 	}

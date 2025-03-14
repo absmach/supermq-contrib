@@ -13,7 +13,7 @@ import (
 	"github.com/absmach/supermq-contrib/twins"
 	"github.com/absmach/supermq-contrib/twins/mocks"
 	"github.com/absmach/supermq-contrib/twins/mongodb"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ const (
 var (
 	port        string
 	addr        string
-	testLog, _  = mglog.New(os.Stdout, "info")
+	testLog, _  = smqlog.New(os.Stdout, "info")
 	idProvider  = uuid.New()
 	invalidName = strings.Repeat("m", maxNameSize+1)
 )
@@ -237,7 +237,7 @@ func TestTwinsRetrieveByAttribute(t *testing.T) {
 
 func TestTwinsRetrieveAll(t *testing.T) {
 	email := "twin-multi-retrieval@example.com"
-	name := "magistrala"
+	name := "supermq"
 	metadata := twins.Metadata{
 		"type": "test",
 	}

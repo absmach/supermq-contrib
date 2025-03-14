@@ -1,7 +1,7 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-MG_DOCKER_IMAGE_NAME_PREFIX ?= magistrala
+SMQ_DOCKER_IMAGE_NAME_PREFIX ?= supermq-contrib
 BUILD_DIR = build
 SERVICES = opcua lora influxdb-writer influxdb-reader mongodb-writer \
 	mongodb-reader cassandra-writer cassandra-reader smtp-notifier smpp-notifier
@@ -23,21 +23,21 @@ DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
 MOCKERY_VERSION=v2.43.2
-ifneq ($(MG_MESSAGE_BROKER_TYPE),)
-    MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
+ifneq ($(SMQ_MESSAGE_BROKER_TYPE),)
+    SMQ_MESSAGE_BROKER_TYPE := $(SMQ_MESSAGE_BROKER_TYPE)
 else
-    MG_MESSAGE_BROKER_TYPE=nats
+    SMQ_MESSAGE_BROKER_TYPE=nats
 endif
 
-ifneq ($(MG_ES_TYPE),)
-    MG_ES_TYPE := $(MG_ES_TYPE)
+ifneq ($(SMQ_ES_TYPE),)
+    SMQ_ES_TYPE := $(SMQ_ES_TYPE)
 else
-    MG_ES_TYPE=nats
+    SMQ_ES_TYPE=nats
 endif
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -tags $(MG_MESSAGE_BROKER_TYPE) --tags $(MG_ES_TYPE) -ldflags "-s -w \
+	go build -tags $(SMQ_MESSAGE_BROKER_TYPE) --tags $(SMQ_ES_TYPE) -ldflags "-s -w \
 	-X 'github.com/absmach/supermq.BuildTime=$(TIME)' \
 	-X 'github.com/absmach/supermq.Version=$(VERSION)' \
 	-X 'github.com/absmach/supermq.Commit=$(COMMIT)'" \
@@ -55,7 +55,7 @@ define make_docker
 		--build-arg VERSION=$(VERSION) \
 		--build-arg COMMIT=$(COMMIT) \
 		--build-arg TIME=$(TIME) \
-		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
+		--tag=$(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile .
 endef
 
@@ -65,7 +65,7 @@ define make_docker_dev
 	docker build \
 		--no-cache \
 		--build-arg SVC=$(svc) \
-		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
+		--tag=$(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile.dev ./build
 endef
 
@@ -88,12 +88,12 @@ cleandocker:
 
 ifdef pv
 	# Remove unused volumes
-	docker volume ls -f name=$(MG_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
+	docker volume ls -f name=$(SMQ_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
 endif
 
 install:
 	for file in $(BUILD_DIR)/*; do \
-		cp $$file $(GOBIN)/magistrala-`basename $$file`; \
+		cp $$file $(GOBIN)/supermq-contrib-`basename $$file`; \
 	done
 
 mocks:
@@ -118,8 +118,8 @@ define test_api_service
 		exit 1; \
 	fi
 
-	@if [ "$(svc)" = "http" ] && [ -z "$(THING_SECRET)" ]; then \
-		echo "THING_SECRET is not set"; \
+	@if [ "$(svc)" = "http" ] && [ -z "$(CLIENT_SECRET)" ]; then \
+		echo "CLIENT_SECRET is not set"; \
 		echo "Please set it to a valid secret"; \
 		exit 1; \
 	fi
@@ -154,7 +154,7 @@ dockers_dev: $(DOCKERS_DEV)
 
 define docker_push
 	for svc in $(SERVICES); do \
-		docker push $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(1); \
+		docker push $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(1); \
 	done
 endef
 
@@ -169,7 +169,7 @@ release:
 	git checkout $(version)
 	$(MAKE) dockers
 	for svc in $(SERVICES); do \
-		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
+		docker tag $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
 	done
 	$(call docker_push,$(version))
 

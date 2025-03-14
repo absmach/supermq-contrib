@@ -22,7 +22,7 @@ import (
 	"github.com/absmach/supermq-contrib/twins/events"
 	twmongodb "github.com/absmach/supermq-contrib/twins/mongodb"
 	"github.com/absmach/supermq-contrib/twins/tracing"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	auth "github.com/absmach/supermq/pkg/authn"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
@@ -41,24 +41,24 @@ import (
 
 const (
 	svcName        = "twins"
-	envPrefixDB    = "MG_TWINS_DB_"
-	envPrefixHTTP  = "MG_TWINS_HTTP_"
-	envPrefixAuth  = "MG_AUTH_GRPC_"
+	envPrefixDB    = "SMQ_TWINS_DB_"
+	envPrefixHTTP  = "SMQ_TWINS_HTTP_"
+	envPrefixAuth  = "SMQ_AUTH_GRPC_"
 	defSvcHTTPPort = "9018"
 )
 
 type config struct {
-	LogLevel        string  `env:"MG_TWINS_LOG_LEVEL"          envDefault:"info"`
-	StandaloneID    string  `env:"MG_TWINS_STANDALONE_ID"      envDefault:""`
-	StandaloneToken string  `env:"MG_TWINS_STANDALONE_TOKEN"   envDefault:""`
-	ChannelID       string  `env:"MG_TWINS_CHANNEL_ID"         envDefault:""`
-	BrokerURL       string  `env:"MG_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
-	JaegerURL       url.URL `env:"MG_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry   bool    `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID      string  `env:"MG_TWINS_INSTANCE_ID"        envDefault:""`
-	ESURL           string  `env:"MG_ES_URL"                   envDefault:"nats://localhost:4222"`
-	CacheURL        string  `env:"MG_TWINS_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
-	TraceRatio      float64 `env:"MG_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
+	LogLevel        string  `env:"SMQ_TWINS_LOG_LEVEL"          envDefault:"info"`
+	StandaloneID    string  `env:"SMQ_TWINS_STANDALONE_ID"      envDefault:""`
+	StandaloneToken string  `env:"SMQ_TWINS_STANDALONE_TOKEN"   envDefault:""`
+	ChannelID       string  `env:"SMQ_TWINS_CHANNEL_ID"         envDefault:""`
+	BrokerURL       string  `env:"SMQ_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
+	JaegerURL       url.URL `env:"SMQ_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry   bool    `env:"SMQ_SEND_TELEMETRY"           envDefault:"true"`
+	InstanceID      string  `env:"SMQ_TWINS_INSTANCE_ID"        envDefault:""`
+	ESURL           string  `env:"SMQ_ES_URL"                   envDefault:"nats://localhost:4222"`
+	CacheURL        string  `env:"SMQ_TWINS_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
+	TraceRatio      float64 `env:"SMQ_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
 }
 
 func main() {
@@ -70,13 +70,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {

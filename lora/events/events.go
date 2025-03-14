@@ -3,12 +3,12 @@
 
 package events
 
-type createThingEvent struct {
+type createClientEvent struct {
 	id         string
 	loraDevEUI string
 }
 
-type removeThingEvent struct {
+type removeClientEvent struct {
 	id string
 }
 
@@ -21,7 +21,7 @@ type removeChannelEvent struct {
 	id string
 }
 
-type connectionThingEvent struct {
-	chanID   string
-	thingIDs []string
+type connectionClientEvent struct {
+	chanID    string
+	clientIDs []string
 }

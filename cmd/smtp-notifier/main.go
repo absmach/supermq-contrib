@@ -21,7 +21,7 @@ import (
 	"github.com/absmach/supermq-contrib/consumers/notifiers/tracing"
 	email "github.com/absmach/supermq-contrib/pkg/email"
 	"github.com/absmach/supermq/consumers"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	"github.com/absmach/supermq/pkg/grpcclient"
@@ -42,8 +42,8 @@ import (
 
 const (
 	svcName           = "smtp-notifier"
-	envPrefixDB       = "MG_SMTP_NOTIFIER_DB_"
-	envPrefixHTTP     = "MG_SMTP_NOTIFIER_HTTP_"
+	envPrefixDB       = "SMQ_SMTP_NOTIFIER_DB_"
+	envPrefixHTTP     = "SMQ_SMTP_NOTIFIER_HTTP_"
 	envPrefixAuth     = "SMQ_AUTH_GRPC_"
 	envPrefixClients  = "SMQ_CLIENTS_AUTH_GRPC_"
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
@@ -71,13 +71,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -136,13 +136,6 @@ func main() {
 	}
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
-
-	clientsClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&clientsClientCfg, env.Options{Prefix: envPrefixClients}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load clients gRPC client configuration : %s", err))
-		exitCode = 1
-		return
-	}
 
 	authnCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&authnCfg, env.Options{Prefix: envPrefixAuth}); err != nil {

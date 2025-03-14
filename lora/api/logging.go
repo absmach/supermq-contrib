@@ -28,57 +28,57 @@ func LoggingMiddleware(svc lora.Service, logger *slog.Logger) lora.Service {
 	}
 }
 
-func (lm loggingMiddleware) CreateThing(ctx context.Context, thingID, loraDevEUI string) (err error) {
+func (lm loggingMiddleware) CreateClient(ctx context.Context, clientID, loraDevEUI string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 			slog.String("dev_eui", loraDevEUI),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Create thing route-map failed", args...)
+			lm.logger.Warn("Create client route-map failed", args...)
 			return
 		}
-		lm.logger.Info("Create thing route-map completed successfully", args...)
+		lm.logger.Info("Create client route-map completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.CreateThing(ctx, thingID, loraDevEUI)
+	return lm.svc.CreateClient(ctx, clientID, loraDevEUI)
 }
 
-func (lm loggingMiddleware) UpdateThing(ctx context.Context, thingID, loraDevEUI string) (err error) {
+func (lm loggingMiddleware) UpdateClient(ctx context.Context, clientID, loraDevEUI string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 			slog.String("dev_eui", loraDevEUI),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update thing route-map failed", args...)
+			lm.logger.Warn("Update client route-map failed", args...)
 			return
 		}
-		lm.logger.Info("Update thing route-map completed successfully", args...)
+		lm.logger.Info("Update client route-map completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.UpdateThing(ctx, thingID, loraDevEUI)
+	return lm.svc.UpdateClient(ctx, clientID, loraDevEUI)
 }
 
-func (lm loggingMiddleware) RemoveThing(ctx context.Context, thingID string) (err error) {
+func (lm loggingMiddleware) RemoveClient(ctx context.Context, clientID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove thing route-map failed", args...)
+			lm.logger.Warn("Remove client route-map failed", args...)
 			return
 		}
-		lm.logger.Info("Remove thing route-map completed successfully", args...)
+		lm.logger.Info("Remove client route-map completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.RemoveThing(ctx, thingID)
+	return lm.svc.RemoveClient(ctx, clientID)
 }
 
 func (lm loggingMiddleware) CreateChannel(ctx context.Context, chanID, loraApp string) (err error) {
@@ -132,40 +132,40 @@ func (lm loggingMiddleware) RemoveChannel(ctx context.Context, chanID string) (e
 	return lm.svc.RemoveChannel(ctx, chanID)
 }
 
-func (lm loggingMiddleware) ConnectThing(ctx context.Context, chanID, thingID string) (err error) {
+func (lm loggingMiddleware) ConnectClient(ctx context.Context, chanID, clientID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("channel_id", chanID),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 		}
 		if err != nil {
 			args := append(args, slog.String("error", err.Error()))
-			lm.logger.Warn("Connect thing to channel failed", args...)
+			lm.logger.Warn("Connect client to channel failed", args...)
 			return
 		}
-		lm.logger.Info("Connect thing to channel completed successfully", args...)
+		lm.logger.Info("Connect client to channel completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ConnectThing(ctx, chanID, thingID)
+	return lm.svc.ConnectClient(ctx, chanID, clientID)
 }
 
-func (lm loggingMiddleware) DisconnectThing(ctx context.Context, chanID, thingID string) (err error) {
+func (lm loggingMiddleware) DisconnectClient(ctx context.Context, chanID, clientID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("channel_id", chanID),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 		}
 		if err != nil {
 			args := append(args, slog.String("error", err.Error()))
-			lm.logger.Warn("Disconnect thing from channel failed", args...)
+			lm.logger.Warn("Disconnect client from channel failed", args...)
 			return
 		}
-		lm.logger.Info("Disconnect thing from channel completed successfully", args...)
+		lm.logger.Info("Disconnect client from channel completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.DisconnectThing(ctx, chanID, thingID)
+	return lm.svc.DisconnectClient(ctx, chanID, clientID)
 }
 
 func (lm loggingMiddleware) Publish(ctx context.Context, msg *lora.Message) (err error) {

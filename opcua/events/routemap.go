@@ -18,7 +18,7 @@ type routerMap struct {
 	prefix string
 }
 
-// NewRouteMapRepository returns redis thing cache implementation.
+// NewRouteMapRepository returns redis client cache implementation.
 func NewRouteMapRepository(client *redis.Client, prefix string) opcua.RouteMapRepository {
 	return &routerMap{
 		client: client,

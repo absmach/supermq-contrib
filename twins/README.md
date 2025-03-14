@@ -7,16 +7,16 @@ Digital twin is usually less detailed and can be a digital replica of a real wor
 
 ## Overview
 
-The Twins Service is built on top of the Magistrala platform and interacts with its core components such as users, clients, and channels. It listens to the message broker, intercepts relevant messages, and updates digital twin states accordingly. Each twin consists of:
+The Twins Service is built on top of the SupeMQ platform and interacts with its core components such as users, clients, and channels. It listens to the message broker, intercepts relevant messages, and updates digital twin states accordingly. Each twin consists of:
 
 - **Metadata**: owner, ID, name, timestamps, revision number
 - **Definitions**: semantic representation of system components as attributes
 - **States**: time-series history of system state
 
-Magistrala twins anatomy is of the following format:
+SupeMQ twins anatomy is of the following format:
 
 ```go
-// Twin is a Magistrala data system representation. Each twin is owned
+// Twin is a SupeMQ data system representation. Each twin is owned
 // by a single user, and is assigned with the unique identifier.
 type Twin struct {
  Owner       string
@@ -109,7 +109,7 @@ When we define our digital twin, its JSON representation might look like this:
 }
 ```
 
-In the case of the upper twin, we begin with an empty definition, the one with the `id` **0** - we could have provided the definition immediately - and over the course of time, we add two more definitions, so the total number of revisions is **2** (revision index is zero-based). We decide not to persist the number of rotation per second in our digital twin state. We define it, though, because the definition and its attributes are used not only to define states of a complex data agent system, but also to define the semantic structure of the system. `delta` is the number of nanoseconds used to determine whether the received attribute value should trigger the generation of the new state or the same state should be updated. The reason for this is to enable state sampling over the regular intervals of time. Discarded values are written to the database of choice by Magistrala [writers][writer], so you can always retrieve intermediate values if need be.
+In the case of the upper twin, we begin with an empty definition, the one with the `id` **0** - we could have provided the definition immediately - and over the course of time, we add two more definitions, so the total number of revisions is **2** (revision index is zero-based). We decide not to persist the number of rotation per second in our digital twin state. We define it, though, because the definition and its attributes are used not only to define states of a complex data agent system, but also to define the semantic structure of the system. `delta` is the number of nanoseconds used to determine whether the received attribute value should trigger the generation of the new state or the same state should be updated. The reason for this is to enable state sampling over the regular intervals of time. Discarded values are written to the database of choice by SupeMQ [writers][writer], so you can always retrieve intermediate values if need be.
 
 **states** are created according to the twin's current definition. A state stores twin's ID - every state belongs to a single twin -, its own ID, twin's definition number, creation date and the actual payload. **Payload** is a set of key-value pairs where a key corresponds to the attribute name and a value is the actual value of the attribute. All [SenML value types][senml] are supported.
 
@@ -121,28 +121,28 @@ default values.
 
 | Variable                   | Description                                                         | Default                          |
 | -------------------------- | ------------------------------------------------------------------- | -------------------------------- |
-| MG_TWINS_LOG_LEVEL         | Log level for twin service (debug, info, warn, error)               | info                             |
-| MG_TWINS_HTTP_PORT         | Twins service HTTP port                                             | 9018                             |
-| MG_TWINS_SERVER_CERT       | Path to server certificate in PEM format                            |                                  |
-| MG_TWINS_SERVER_KEY        | Path to server key in PEM format                                    |                                  |
-| MG_JAEGER_URL              | Jaeger server URL                                                   | <http://jaeger:14268/api/traces> |
-| MG_TWINS_DB                | Database name                                                       | magistrala                       |
-| MG_TWINS_DB_HOST           | Database host address                                               | localhost                        |
-| MG_TWINS_DB_PORT           | Database host port                                                  | 27017                            |
-| MG_THINGS_STANDALONE_ID    | User ID for standalone mode (no gRPC communication with users)      |                                  |
-| MG_THINGS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header |                                  |
-| MG_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                      | false                            |
-| MG_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                   |                                  |
-| MG_TWINS_CHANNEL_ID        | Message broker notifications channel ID                             |                                  |
-| MG_MESSAGE_BROKER_URL      | Magistrala Message broker URL                                       | <nats://localhost:4222>          |
-| MG_AUTH_GRPC_URL           | Auth service gRPC URL                                               | <localhost:7001>                 |
-| MG_AUTH_GRPC_TIMEOUT       | Auth service gRPC request timeout in seconds                        | 1s                               |
-| MG_TWINS_CACHE_URL         | Cache database URL                                                  | <redis://localhost:6379/0>       |
-| MG_SEND_TELEMETRY          | Send telemetry to magistrala call home server                       | true                             |
+| SMQ_TWINS_LOG_LEVEL         | Log level for twin service (debug, info, warn, error)               | info                             |
+| SMQ_TWINS_HTTP_PORT         | Twins service HTTP port                                             | 9018                             |
+| SMQ_TWINS_SERVER_CERT       | Path to server certificate in PEM format                            |                                  |
+| SMQ_TWINS_SERVER_KEY        | Path to server key in PEM format                                    |                                  |
+| SMQ_JAEGER_URL              | Jaeger server URL                                                   | <http://jaeger:14268/api/traces> |
+| SMQ_TWINS_DB                | Database name                                                       | supermq                       |
+| SMQ_TWINS_DB_HOST           | Database host address                                               | localhost                        |
+| SMQ_TWINS_DB_PORT           | Database host port                                                  | 27017                            |
+| SMQ_CLIENTS_STANDALONE_ID    | User ID for standalone mode (no gRPC communication with users)      |                                  |
+| SMQ_CLIENTS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header |                                  |
+| SMQ_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                      | false                            |
+| SMQ_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                   |                                  |
+| SMQ_TWINS_CHANNEL_ID        | Message broker notifications channel ID                             |                                  |
+| SMQ_MESSAGE_BROKER_URL      | SupeMQ Message broker URL                                       | <nats://localhost:4222>          |
+| SMQ_AUTH_GRPC_URL           | Auth service gRPC URL                                               | <localhost:7001>                 |
+| SMQ_AUTH_GRPC_TIMEOUT       | Auth service gRPC request timeout in seconds                        | 1s                               |
+| SMQ_TWINS_CACHE_URL         | Cache database URL                                                  | <redis://localhost:6379/0>       |
+| SMQ_SEND_TELEMETRY          | Send telemetry to supermq call home server                       | true                             |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`twins`](https://github.com/absmach/magistrala/blob/main/docker/addons/twins/docker-compose.yml#L35-L58) service section in
+The service itself is distributed as Docker container. Check the [`twins`](https://github.com/absmach/supermq-contrib/blob/main/docker/addons/twins/docker-compose.yml#L35-L58) service section in
 docker-compose file to see how service is deployed.
 
 To start the service outside of the container, execute the following shell
@@ -150,9 +150,9 @@ script:
 
 ```bash
 # download the latest version of the service
-go get github.com/absmach/magistrala
+go get github.com/absmach/supermq-contrib
 
-cd $GOPATH/src/github.com/absmach/magistrala
+cd $GOPATH/src/github.com/absmach/supermq-contrib
 
 # compile the twins
 make twins
@@ -161,24 +161,24 @@ make twins
 make install
 
 # set the environment variables and run the service
-MG_TWINS_LOG_LEVEL=[Twins log level] \
-MG_TWINS_HTTP_PORT=[Service HTTP port] \
-MG_TWINS_SERVER_CERT=[String path to server cert in pem format] \
-MG_TWINS_SERVER_KEY=[String path to server key in pem format] \
-MG_JAEGER_URL=[Jaeger server URL] \
-MG_TWINS_DB=[Database name] \
-MG_TWINS_DB_HOST=[Database host address] \
-MG_TWINS_DB_PORT=[Database host port] \
-MG_THINGS_STANDALONE_EMAIL=[User email for standalone mode (no gRPC communication with auth)] \
-MG_THINGS_STANDALONE_TOKEN=[User token for standalone mode that should be passed in auth header] \
-MG_TWINS_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
-MG_TWINS_CA_CERTS=[Path to trusted CAs in PEM format] \
-MG_TWINS_CHANNEL_ID=[Message broker notifications channel ID] \
-MG_MESSAGE_BROKER_URL=[Magistrala Message broker URL] \
-MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
-MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
-MG_TWINS_CACHE_URL=[Cache database URL] \
-$GOBIN/magistrala-twins
+SMQ_TWINS_LOG_LEVEL=[Twins log level] \
+SMQ_TWINS_HTTP_PORT=[Service HTTP port] \
+SMQ_TWINS_SERVER_CERT=[String path to server cert in pem format] \
+SMQ_TWINS_SERVER_KEY=[String path to server key in pem format] \
+SMQ_JAEGER_URL=[Jaeger server URL] \
+SMQ_TWINS_DB=[Database name] \
+SMQ_TWINS_DB_HOST=[Database host address] \
+SMQ_TWINS_DB_PORT=[Database host port] \
+SMQ_CLIENTS_STANDALONE_EMAIL=[User email for standalone mode (no gRPC communication with auth)] \
+SMQ_CLIENTS_STANDALONE_TOKEN=[User token for standalone mode that should be passed in auth header] \
+SMQ_TWINS_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
+SMQ_TWINS_CA_CERTS=[Path to trusted CAs in PEM format] \
+SMQ_TWINS_CHANNEL_ID=[Message broker notifications channel ID] \
+SMQ_MESSAGE_BROKER_URL=[SupeMQ Message broker URL] \
+SMQ_AUTH_GRPC_URL=[Auth service gRPC URL] \
+SMQ_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
+SMQ_TWINS_CACHE_URL=[Cache database URL] \
+$GOBIN/supermq-contrib-twins
 ```
 
 ## API Usage
@@ -186,18 +186,18 @@ $GOBIN/magistrala-twins
 ### Starting twins service
 
 The twins service publishes notifications on a Message broker subject of the format
-`channels.<MG_TWINS_CHANNEL_ID>.messages.<twinID>.<crudOp>`, where `crudOp`
+`channels.<SMQ_TWINS_CHANNEL_ID>.messages.<twinID>.<crudOp>`, where `crudOp`
 stands for the crud operation done on twin - create, update, delete or
 retrieve - or state - save state. In order to use twin service notifications,
-one must inform it - via environment variables - about the Magistrala channel used
+one must inform it - via environment variables - about the SupeMQ channel used
 for notification publishing. You must use an already existing channel, since you
-cannot know in advance or set the channel ID (Magistrala does it automatically).
+cannot know in advance or set the channel ID (SupeMQ does it automatically).
 
 To set the environment variable, please go to `.env` file and set the following
 variable:
 
 ```bash
-MG_TWINS_CHANNEL_ID=
+SMQ_TWINS_CHANNEL_ID=
 ```
 
 ### Create a Twin
@@ -259,12 +259,12 @@ curl -s -X GET -H "Authorization: Bearer <user_token>"   http://localhost:9018/s
 
 ## Notifications
 
-Twins service publishes notifications to a Magistrala message broker channel.
+Twins service publishes notifications to a SupeMQ message broker channel.
 
-In order to pick up this notification, you have to create a Magistrala channel before you start the twins service and inform the twins service about the channel by means of the environment variable, like this:
+In order to pick up this notification, you have to create a SupeMQ channel before you start the twins service and inform the twins service about the channel by means of the environment variable, like this:
 
 ```bash
-export MG_TWINS_CHANNEL_ID=f6894dfe-a7c9-4eef-a614-637ebeea5b4c
+export SMQ_TWINS_CHANNEL_ID=f6894dfe-a7c9-4eef-a614-637ebeea5b4c
 ```
 
 The twins service will use this channel to publish notifications related to twins creation, update, retrieval and deletion. It will also publish notifications related to state saving into the database.
@@ -272,7 +272,7 @@ The twins service will use this channel to publish notifications related to twin
 All notifications will be published on the following message broker subject:
 
 ```txt
-channels.<MG_TWINS_CHANNEL_ID>.<optional_subtopic>
+channels.<SMQ_TWINS_CHANNEL_ID>.<optional_subtopic>
 ```
 
 where `<optional_subtopic>` is one of the following:
@@ -290,16 +290,16 @@ where `<optional_subtopic>` is one of the following:
 
 ## Authentication & Authorization
 
-Each twin belongs to a Magistrala user (a person or an organization).
+Each twin belongs to a SupeMQ user (a person or an organization).
 API calls require an authentication token (`Bearer <user_token>` in the header).
 
 ## Additional Resources
 
 with the corresponding values of the desired channel. If you are running
-magistrala natively, than do the same thing in the corresponding console
+supermq natively, than do the same client in the corresponding console
 environment.
 
-For more details, visit the [API documentation](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=twins-openapi.yml).
+For more details, visit the [API documentation](https://docs.api.supermq.abstractmachines.fr/?urls.primaryName=twins-openapi.yml).
 
 [writer]: ./storage.md
 [senml]: https://tools.ietf.org/html/rfc8428#section-4.3

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	keyspace    = "magistrala"
+	keyspace    = "supermq"
 	msgsNum     = 42
 	valueFields = 5
 	subtopic    = "topic"

@@ -17,7 +17,7 @@ import (
 	mongoclient "github.com/absmach/supermq-contrib/pkg/clients/mongo"
 	"github.com/absmach/supermq-contrib/readers/api"
 	"github.com/absmach/supermq-contrib/readers/mongodb"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	"github.com/absmach/supermq/pkg/prometheus"
@@ -32,8 +32,8 @@ import (
 
 const (
 	svcName           = "mongodb-reader"
-	envPrefixDB       = "MG_MONGO_"
-	envPrefixHTTP     = "MG_MONGO_READER_HTTP_"
+	envPrefixDB       = "SMQ_MONGO_"
+	envPrefixHTTP     = "SMQ_MONGO_READER_HTTP_"
 	envPrefixAuth     = "SMQ_AUTH_GRPC_"
 	envPrefixClients  = "SMQ_CLIENTS_AUTH_GRPC_"
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
@@ -42,9 +42,9 @@ const (
 )
 
 type config struct {
-	LogLevel      string `env:"MG_MONGO_READER_LOG_LEVEL"     envDefault:"info"`
-	SendTelemetry bool   `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID    string `env:"MG_MONGO_READER_INSTANCE_ID"   envDefault:""`
+	LogLevel      string `env:"SMQ_MONGO_READER_LOG_LEVEL"     envDefault:"info"`
+	SendTelemetry bool   `env:"SMQ_SEND_TELEMETRY"             envDefault:"true"`
+	InstanceID    string `env:"SMQ_MONGO_READER_INSTANCE_ID"   envDefault:""`
 }
 
 func main() {
@@ -56,13 +56,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {

@@ -42,7 +42,7 @@ var _ opcua.Subscriber = (*client)(nil)
 type client struct {
 	ctx        context.Context
 	publisher  messaging.Publisher
-	thingsRM   opcua.RouteMapRepository
+	clientsRM  opcua.RouteMapRepository
 	channelsRM opcua.RouteMapRepository
 	connectRM  opcua.RouteMapRepository
 	logger     *slog.Logger
@@ -58,11 +58,11 @@ type message struct {
 }
 
 // NewSubscriber returns new OPC-UA client instance.
-func NewSubscriber(ctx context.Context, publisher messaging.Publisher, thingsRM, channelsRM, connectRM opcua.RouteMapRepository, log *slog.Logger) opcua.Subscriber {
+func NewSubscriber(ctx context.Context, publisher messaging.Publisher, clientsRM, channelsRM, connectRM opcua.RouteMapRepository, log *slog.Logger) opcua.Subscriber {
 	return client{
 		ctx:        ctx,
 		publisher:  publisher,
-		thingsRM:   thingsRM,
+		clientsRM:  clientsRM,
 		channelsRM: channelsRM,
 		connectRM:  connectRM,
 		logger:     log,
@@ -209,7 +209,7 @@ func (c client) runHandler(ctx context.Context, sub *opcuagopcua.Subscription, u
 	}
 }
 
-// Publish forwards messages from the OPC-UA Server to Magistrala Message broker.
+// Publish forwards messages from the OPC-UA Server to SupeMQ Message broker.
 func (c client) publish(ctx context.Context, token string, m message) error {
 	// Get route-map of the OPC-UA ServerURI
 	chanID, err := c.channelsRM.Get(ctx, m.ServerURI)
@@ -218,23 +218,23 @@ func (c client) publish(ctx context.Context, token string, m message) error {
 	}
 
 	// Get route-map of the OPC-UA NodeID
-	thingID, err := c.thingsRM.Get(ctx, m.NodeID)
+	clientID, err := c.clientsRM.Get(ctx, m.NodeID)
 	if err != nil {
 		return errNotFoundNodeID
 	}
 
 	// Check connection between ServerURI and NodeID
-	cKey := fmt.Sprintf("%s:%s", chanID, thingID)
+	cKey := fmt.Sprintf("%s:%s", chanID, clientID)
 	if _, err := c.connectRM.Get(ctx, cKey); err != nil {
-		return fmt.Errorf("%s between channel %s and thing %s", errNotFoundConn, chanID, thingID)
+		return fmt.Errorf("%s between channel %s and client %s", errNotFoundConn, chanID, clientID)
 	}
 
-	// Publish on Magistrala Message broker
+	// Publish on SupeMQ Message broker
 	SenML := fmt.Sprintf(`[{"n":"%s", "t": %d, "%s":%v}]`, m.Type, m.Time, m.DataKey, m.Data)
 	payload := []byte(SenML)
 
 	msg := messaging.Message{
-		Publisher: thingID,
+		Publisher: clientID,
 		Protocol:  protocol,
 		Channel:   chanID,
 		Payload:   payload,

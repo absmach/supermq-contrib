@@ -20,7 +20,7 @@ import (
 	opcuaevents "github.com/absmach/supermq-contrib/opcua/events"
 	"github.com/absmach/supermq-contrib/opcua/gopcua"
 	redisclient "github.com/absmach/supermq-contrib/pkg/clients/redis"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/events"
 	"github.com/absmach/supermq/pkg/events/store"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
@@ -37,26 +37,26 @@ import (
 
 const (
 	svcName        = "opc-ua-adapter"
-	envPrefixHTTP  = "MG_OPCUA_ADAPTER_HTTP_"
+	envPrefixHTTP  = "SMQ_OPCUA_ADAPTER_HTTP_"
 	defSvcHTTPPort = "8180"
 
-	thingsRMPrefix     = "client"
+	clientsRMPrefix    = "client"
 	channelsRMPrefix   = "channel"
 	connectionRMPrefix = "connection"
 
-	thingsStream = "events.supermq.clients"
+	clientsStream = "events.supermq.clients"
 )
 
 type config struct {
-	LogLevel       string  `env:"MG_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
-	ESConsumerName string  `env:"MG_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
-	BrokerURL      string  `env:"MG_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
-	JaegerURL      url.URL `env:"MG_JAEGER_URL"                       envDefault:"http://localhost:14268/api/traces"`
-	SendTelemetry  bool    `env:"MG_SEND_TELEMETRY"                   envDefault:"true"`
-	InstanceID     string  `env:"MG_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
-	ESURL          string  `env:"MG_ES_URL"                           envDefault:"nats://localhost:4222"`
-	RouteMapURL    string  `env:"MG_OPCUA_ADAPTER_ROUTE_MAP_URL"      envDefault:"redis://localhost:6379/0"`
-	TraceRatio     float64 `env:"MG_JAEGER_TRACE_RATIO"               envDefault:"1.0"`
+	LogLevel       string  `env:"SMQ_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
+	ESConsumerName string  `env:"SMQ_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
+	BrokerURL      string  `env:"SMQ_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
+	JaegerURL      url.URL `env:"SMQ_JAEGER_URL"                       envDefault:"http://localhost:14268/api/traces"`
+	SendTelemetry  bool    `env:"SMQ_SEND_TELEMETRY"                   envDefault:"true"`
+	InstanceID     string  `env:"SMQ_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
+	ESURL          string  `env:"SMQ_ES_URL"                           envDefault:"nats://localhost:4222"`
+	RouteMapURL    string  `env:"SMQ_OPCUA_ADAPTER_ROUTE_MAP_URL"      envDefault:"redis://localhost:6379/0"`
+	TraceRatio     float64 `env:"SMQ_JAEGER_TRACE_RATIO"               envDefault:"1.0"`
 }
 
 func main() {
@@ -73,13 +73,13 @@ func main() {
 		log.Fatalf("failed to load %s opcua client configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -104,7 +104,7 @@ func main() {
 	}
 	defer rmConn.Close()
 
-	thingRM := newRouteMapRepositoy(rmConn, thingsRMPrefix, logger)
+	clientRM := newRouteMapRepositoy(rmConn, clientsRMPrefix, logger)
 	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
 	connRM := newRouteMapRepositoy(rmConn, connectionRMPrefix, logger)
 
@@ -130,15 +130,15 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	sub := gopcua.NewSubscriber(ctx, pubSub, thingRM, chanRM, connRM, logger)
+	sub := gopcua.NewSubscriber(ctx, pubSub, clientRM, chanRM, connRM, logger)
 	browser := gopcua.NewBrowser(ctx, logger)
 
-	svc := newService(sub, browser, thingRM, chanRM, connRM, opcConfig, logger)
+	svc := newService(sub, browser, clientRM, chanRM, connRM, opcConfig, logger)
 
 	go subscribeToStoredSubs(ctx, sub, opcConfig, logger)
 
-	if err = subscribeToThingsES(ctx, svc, cfg, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to things event store: %s", err))
+	if err = subscribeToClientsES(ctx, svc, cfg, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to clients event store: %s", err))
 		exitCode = 1
 		return
 	}
@@ -183,14 +183,14 @@ func subscribeToStoredSubs(ctx context.Context, sub opcua.Subscriber, cfg opcua.
 	}
 }
 
-func subscribeToThingsES(ctx context.Context, svc opcua.Service, cfg config, logger *slog.Logger) error {
+func subscribeToClientsES(ctx context.Context, svc opcua.Service, cfg config, logger *slog.Logger) error {
 	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
 	if err != nil {
 		return err
 	}
 
 	subConfig := events.SubscriberConfig{
-		Stream:   thingsStream,
+		Stream:   clientsStream,
 		Consumer: cfg.ESConsumerName,
 		Handler:  opcuaevents.NewEventHandler(svc),
 	}
@@ -202,8 +202,8 @@ func newRouteMapRepositoy(client *redis.Client, prefix string, logger *slog.Logg
 	return opcuaevents.NewRouteMapRepository(client, prefix)
 }
 
-func newService(sub opcua.Subscriber, browser opcua.Browser, thingRM, chanRM, connRM opcua.RouteMapRepository, opcuaConfig opcua.Config, logger *slog.Logger) opcua.Service {
-	svc := opcua.New(sub, browser, thingRM, chanRM, connRM, opcuaConfig, logger)
+func newService(sub opcua.Subscriber, browser opcua.Browser, clientRM, chanRM, connRM opcua.RouteMapRepository, opcuaConfig opcua.Config, logger *slog.Logger) opcua.Service {
+	svc := opcua.New(sub, browser, clientRM, chanRM, connRM, opcuaConfig, logger)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("opc_ua_adapter", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

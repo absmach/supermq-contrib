@@ -11,7 +11,7 @@ import (
 	"time"
 
 	writer "github.com/absmach/supermq-contrib/consumers/writers/influxdb"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
@@ -23,7 +23,7 @@ import (
 const valueFields = 5
 
 var (
-	testLog, _    = mglog.New(os.Stdout, "info")
+	testLog, _    = smqlog.New(os.Stdout, "info")
 	streamsSize   = 250
 	rowCountSenml = fmt.Sprintf(`from(bucket: "%s") 
 	|> range(start: -1h, stop: 1h) 

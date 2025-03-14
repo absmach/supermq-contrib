@@ -18,8 +18,6 @@ github.com/absmach/callhome v0.14.0 h1:zB4tIZJ1YUmZ1VGHFPfMA/Lo6/Mv19y2dvoOiXj2B
 github.com/absmach/callhome v0.14.0/go.mod h1:l12UJOfibK4Muvg/AbupHuquNV9qSz/ROdTEPg7f2Vk=
 github.com/absmach/certs v0.0.0-20250311082558-4d7532efc611 h1:aC3CdrzNLXjZaqfObgFrAIHXIYEoSxZuFmUyfdiWqGI=
 github.com/absmach/certs v0.0.0-20250311082558-4d7532efc611/go.mod h1:8ilLcqoMy52+L45BzB7kxGuQckrDKf980hUCUBRdCX4=
-github.com/absmach/magistrala v0.15.1 h1:3Bk2hlyWcV591LxPYwlvRcyCXTfuZ1g/EkNmU+o3NNQ=
-github.com/absmach/magistrala v0.15.1/go.mod h1:9pto6xuBt/IuCtZRdEha0iDQKNQ5tyNOjLXJgUiikYk=
 github.com/absmach/mgate v0.4.5 h1:l6RmrEsR9jxkdb9WHUSecmT0HA41TkZZQVffFfUAIfI=
 github.com/absmach/mgate v0.4.5/go.mod h1:IvRIHZexZPEIAPmmaJF0L5DY2ERjj+GxRGitOW4s6qo=
 github.com/absmach/senml v1.0.6 h1:WPeIl6vQ00k7ghWSZYT/QP0KUxq2+4zQoaC7240pLFk=

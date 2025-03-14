@@ -19,7 +19,7 @@ import (
 	"github.com/absmach/supermq-contrib/consumers/writers/influxdb"
 	influxdbclient "github.com/absmach/supermq-contrib/pkg/clients/influxdb"
 	"github.com/absmach/supermq/consumers"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
@@ -32,19 +32,19 @@ import (
 
 const (
 	svcName        = "influxdb-writer"
-	envPrefixHTTP  = "MG_INFLUX_WRITER_HTTP_"
-	envPrefixDB    = "MG_INFLUXDB_"
+	envPrefixHTTP  = "SMQ_INFLUX_WRITER_HTTP_"
+	envPrefixDB    = "SMQ_INFLUXDB_"
 	defSvcHTTPPort = "9006"
 )
 
 type config struct {
-	LogLevel      string  `env:"MG_INFLUX_WRITER_LOG_LEVEL"     envDefault:"info"`
-	ConfigPath    string  `env:"MG_INFLUX_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
-	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"          envDefault:"nats://localhost:4222"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                  envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"              envDefault:"true"`
-	InstanceID    string  `env:"MG_INFLUX_WRITER_INSTANCE_ID"   envDefault:""`
-	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"          envDefault:"1.0"`
+	LogLevel      string  `env:"SMQ_INFLUX_WRITER_LOG_LEVEL"     envDefault:"info"`
+	ConfigPath    string  `env:"SMQ_INFLUX_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
+	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL"          envDefault:"nats://localhost:4222"`
+	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"                  envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"              envDefault:"true"`
+	InstanceID    string  `env:"SMQ_INFLUX_WRITER_INSTANCE_ID"   envDefault:""`
+	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO"          envDefault:"1.0"`
 }
 
 func main() {
@@ -56,13 +56,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {

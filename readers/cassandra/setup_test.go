@@ -10,13 +10,13 @@ import (
 	"testing"
 
 	casclient "github.com/absmach/supermq-contrib/pkg/clients/cassandra"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/gocql/gocql"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 )
 
-var logger, _ = mglog.New(os.Stdout, "info")
+var logger, _ = smqlog.New(os.Stdout, "info")
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
