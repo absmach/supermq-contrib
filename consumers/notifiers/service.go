@@ -68,7 +68,7 @@ func (ns *notifierService) CreateSubscription(ctx context.Context, session authn
 		return "", err
 	}
 	sub.ID = id
-	sub.OwnerID = session.DomainUserID
+	sub.OwnerID = session.UserID
 	id, err = ns.subs.Save(ctx, sub)
 	if err != nil {
 		return "", errors.Wrap(svcerr.ErrCreateEntity, err)

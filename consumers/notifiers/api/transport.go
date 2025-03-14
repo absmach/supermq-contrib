@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/supermq-contrib/consumers/notifiers"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -32,49 +33,53 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string, authn smqauthn.Authentication) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	mux := chi.NewRouter()
 
-	mux.Route("/subscriptions", func(r chi.Router) {
-		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			createSubscriptionEndpoint(svc),
-			decodeCreate,
-			api.EncodeResponse,
-			opts...,
-		), "create").ServeHTTP)
+	mux.Group(func(r chi.Router) {
+		r.Use(api.AuthenticateMiddleware(authn, false))
+		r.Route("/subscriptions", func(r chi.Router) {
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				createSubscriptionEndpoint(svc),
+				decodeCreate,
+				api.EncodeResponse,
+				opts...,
+			), "create").ServeHTTP)
 
-		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			listSubscriptionsEndpoint(svc),
-			decodeList,
-			api.EncodeResponse,
-			opts...,
-		), "list").ServeHTTP)
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				listSubscriptionsEndpoint(svc),
+				decodeList,
+				api.EncodeResponse,
+				opts...,
+			), "list").ServeHTTP)
 
-		r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
-			deleteSubscriptionEndpint(svc),
-			decodeSubscription,
-			api.EncodeResponse,
-			opts...,
-		), "delete").ServeHTTP)
+			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+				deleteSubscriptionEndpint(svc),
+				decodeSubscription,
+				api.EncodeResponse,
+				opts...,
+			), "delete").ServeHTTP)
 
-		r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
-			viewSubscriptionEndpint(svc),
-			decodeSubscription,
-			api.EncodeResponse,
-			opts...,
-		), "view").ServeHTTP)
+			r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
+				viewSubscriptionEndpint(svc),
+				decodeSubscription,
+				api.EncodeResponse,
+				opts...,
+			), "view").ServeHTTP)
 
-		r.Delete("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
-			deleteSubscriptionEndpint(svc),
-			decodeSubscription,
-			api.EncodeResponse,
-			opts...,
-		), "delete").ServeHTTP)
+			r.Delete("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
+				deleteSubscriptionEndpint(svc),
+				decodeSubscription,
+				api.EncodeResponse,
+				opts...,
+			), "delete").ServeHTTP)
+		})
 	})
+
 	mux.Get("/health", supermq.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 

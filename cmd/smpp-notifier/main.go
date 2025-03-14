@@ -167,7 +167,7 @@ func main() {
 		return
 	}
 
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID, authn), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, supermq.Version, logger, cancel)

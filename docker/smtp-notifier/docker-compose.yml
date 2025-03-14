@@ -8,6 +8,7 @@
 
 networks:
   supermq-base-net:
+    driver: bridge
 
 volumes:
   supermq-contrib-smtp-notifier-volume:
@@ -72,19 +73,19 @@ services:
       - supermq-base-net
     volumes:
       - ./config.toml:/config.toml
-      - ../../templates/${SMQ_SMTP_NOTIFIER_EMAIL_TEMPLATE}:/${SMQ_SMTP_NOTIFIER_EMAIL_TEMPLATE}
+      - ../templates/${SMQ_SMTP_NOTIFIER_EMAIL_TEMPLATE}:/${SMQ_SMTP_NOTIFIER_EMAIL_TEMPLATE}
       - type: bind
-        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
         target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
         target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
         target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
