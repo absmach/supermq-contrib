@@ -37,7 +37,7 @@ func New(tracer trace.Tracer, repo notifiers.SubscriptionsRepository) notifiers.
 }
 
 // Save traces the "Save" operation of the wrapped Subscriptions repository.
-func (urm subRepositoryMiddleware) Save(ctx context.Context, sub notifiers.Subscription) (string, error) {
+func (urm subRepositoryMiddleware) Save(ctx context.Context, sub notifiers.Subscription) (notifiers.Subscription, error) {
 	ctx, span := urm.tracer.Start(ctx, saveOp, trace.WithAttributes(
 		attribute.String("id", sub.ID),
 		attribute.String("contact", sub.Contact),

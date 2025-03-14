@@ -65,8 +65,8 @@ func TestSave(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		id, err := repo.Save(context.Background(), tc.sub)
-		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected id %s got %s\n", tc.desc, tc.id, id))
+		expected, err := repo.Save(context.Background(), tc.sub)
+		assert.Equal(t, tc.sub, expected, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.sub, expected))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

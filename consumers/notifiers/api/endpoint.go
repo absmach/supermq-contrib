@@ -29,12 +29,13 @@ func createSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
 			Contact: req.Contact,
 			Topic:   req.Topic,
 		}
-		id, err := svc.CreateSubscription(ctx, session, sub)
+		newSub, err := svc.CreateSubscription(ctx, session, sub)
 		if err != nil {
 			return createSubRes{}, err
 		}
+
 		ucr := createSubRes{
-			ID: id,
+			Subscription: newSub,
 		}
 
 		return ucr, nil
@@ -56,10 +57,7 @@ func viewSubscriptionEndpint(svc notifiers.Service) endpoint.Endpoint {
 			return viewSubRes{}, err
 		}
 		res := viewSubRes{
-			ID:      sub.ID,
-			OwnerID: sub.OwnerID,
-			Contact: sub.Contact,
-			Topic:   sub.Topic,
+			Subscription: sub,
 		}
 		return res, nil
 	}
@@ -86,18 +84,7 @@ func listSubscriptionsEndpoint(svc notifiers.Service) endpoint.Endpoint {
 			return listSubsRes{}, err
 		}
 		res := listSubsRes{
-			Offset: page.Offset,
-			Limit:  page.Limit,
-			Total:  page.Total,
-		}
-		for _, sub := range page.Subscriptions {
-			r := viewSubRes{
-				ID:      sub.ID,
-				OwnerID: sub.OwnerID,
-				Contact: sub.Contact,
-				Topic:   sub.Topic,
-			}
-			res.Subscriptions = append(res.Subscriptions, r)
+			Page: page,
 		}
 
 		return res, nil

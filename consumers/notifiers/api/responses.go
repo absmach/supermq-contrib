@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/absmach/supermq"
+	"github.com/absmach/supermq-contrib/consumers/notifiers"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 )
 
 type createSubRes struct {
-	ID string
+	notifiers.Subscription
 }
 
 func (res createSubRes) Code() int {
@@ -32,14 +33,11 @@ func (res createSubRes) Headers() map[string]string {
 }
 
 func (res createSubRes) Empty() bool {
-	return true
+	return false
 }
 
 type viewSubRes struct {
-	ID      string `json:"id"`
-	OwnerID string `json:"owner_id"`
-	Contact string `json:"contact"`
-	Topic   string `json:"topic"`
+	notifiers.Subscription
 }
 
 func (res viewSubRes) Code() int {
@@ -55,10 +53,7 @@ func (res viewSubRes) Empty() bool {
 }
 
 type listSubsRes struct {
-	Offset        uint         `json:"offset"`
-	Limit         int          `json:"limit"`
-	Total         uint         `json:"total,omitempty"`
-	Subscriptions []viewSubRes `json:"subscriptions,omitempty"`
+	notifiers.Page
 }
 
 func (res listSubsRes) Code() int {
