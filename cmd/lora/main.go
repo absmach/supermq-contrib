@@ -20,7 +20,7 @@ import (
 	loraevents "github.com/absmach/supermq-contrib/lora/events"
 	"github.com/absmach/supermq-contrib/lora/mqtt"
 	redisclient "github.com/absmach/supermq-contrib/pkg/clients/redis"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/events"
 	"github.com/absmach/supermq/pkg/events/store"
 	"github.com/absmach/supermq/pkg/jaeger"
@@ -39,30 +39,30 @@ import (
 
 const (
 	svcName        = "lora-adapter"
-	envPrefixHTTP  = "MG_LORA_ADAPTER_HTTP_"
+	envPrefixHTTP  = "SMQ_LORA_ADAPTER_HTTP_"
 	defSvcHTTPPort = "9017"
 
-	thingsRMPrefix   = "thing"
+	clientsRMPrefix  = "client"
 	channelsRMPrefix = "channel"
 	connsRMPrefix    = "connection"
-	thingsStream     = "events.magistrala.things"
+	clientsStream    = "events.supermq.clients"
 )
 
 type config struct {
-	LogLevel       string        `env:"MG_LORA_ADAPTER_LOG_LEVEL"           envDefault:"info"`
-	LoraMsgURL     string        `env:"MG_LORA_ADAPTER_MESSAGES_URL"        envDefault:"tcp://localhost:1883"`
-	LoraMsgUser    string        `env:"MG_LORA_ADAPTER_MESSAGES_USER"       envDefault:""`
-	LoraMsgPass    string        `env:"MG_LORA_ADAPTER_MESSAGES_PASS"       envDefault:""`
-	LoraMsgTopic   string        `env:"MG_LORA_ADAPTER_MESSAGES_TOPIC"      envDefault:"application/+/device/+/event/up"`
-	LoraMsgTimeout time.Duration `env:"MG_LORA_ADAPTER_MESSAGES_TIMEOUT"    envDefault:"30s"`
-	ESConsumerName string        `env:"MG_LORA_ADAPTER_EVENT_CONSUMER"      envDefault:"lora-adapter"`
-	BrokerURL      string        `env:"MG_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
-	JaegerURL      url.URL       `env:"MG_JAEGER_URL"                       envDefault:"http://localhost:14268/api/traces"`
-	SendTelemetry  bool          `env:"MG_SEND_TELEMETRY"                   envDefault:"true"`
-	InstanceID     string        `env:"MG_LORA_ADAPTER_INSTANCE_ID"         envDefault:""`
-	ESURL          string        `env:"MG_ES_URL"                           envDefault:"nats://localhost:4222"`
-	RouteMapURL    string        `env:"MG_LORA_ADAPTER_ROUTE_MAP_URL"       envDefault:"redis://localhost:6379/0"`
-	TraceRatio     float64       `env:"MG_JAEGER_TRACE_RATIO"               envDefault:"1.0"`
+	LogLevel       string        `env:"SMQ_LORA_ADAPTER_LOG_LEVEL"           envDefault:"info"`
+	LoraMsgURL     string        `env:"SMQ_LORA_ADAPTER_MESSAGES_URL"        envDefault:"tcp://localhost:1883"`
+	LoraMsgUser    string        `env:"SMQ_LORA_ADAPTER_MESSAGES_USER"       envDefault:""`
+	LoraMsgPass    string        `env:"SMQ_LORA_ADAPTER_MESSAGES_PASS"       envDefault:""`
+	LoraMsgTopic   string        `env:"SMQ_LORA_ADAPTER_MESSAGES_TOPIC"      envDefault:"application/+/device/+/event/up"`
+	LoraMsgTimeout time.Duration `env:"SMQ_LORA_ADAPTER_MESSAGES_TIMEOUT"    envDefault:"30s"`
+	ESConsumerName string        `env:"SMQ_LORA_ADAPTER_EVENT_CONSUMER"      envDefault:"lora-adapter"`
+	BrokerURL      string        `env:"SMQ_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
+	JaegerURL      url.URL       `env:"SMQ_JAEGER_URL"                       envDefault:"http://localhost:14268/api/traces"`
+	SendTelemetry  bool          `env:"SMQ_SEND_TELEMETRY"                   envDefault:"true"`
+	InstanceID     string        `env:"SMQ_LORA_ADAPTER_INSTANCE_ID"         envDefault:""`
+	ESURL          string        `env:"SMQ_ES_URL"                           envDefault:"nats://localhost:4222"`
+	RouteMapURL    string        `env:"SMQ_LORA_ADAPTER_ROUTE_MAP_URL"       envDefault:"redis://localhost:6379/0"`
+	TraceRatio     float64       `env:"SMQ_JAEGER_TRACE_RATIO"               envDefault:"1.0"`
 }
 
 func main() {
@@ -74,13 +74,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -127,7 +127,7 @@ func main() {
 	defer pub.Close()
 	pub = brokerstracing.NewPublisher(httpServerConfig, tracer, pub)
 
-	svc := newService(pub, rmConn, thingsRMPrefix, channelsRMPrefix, connsRMPrefix, logger)
+	svc := newService(pub, rmConn, clientsRMPrefix, channelsRMPrefix, connsRMPrefix, logger)
 
 	mqttConn, err := connectToMQTTBroker(cfg.LoraMsgURL, cfg.LoraMsgUser, cfg.LoraMsgPass, cfg.LoraMsgTimeout, logger)
 	if err != nil {
@@ -142,8 +142,8 @@ func main() {
 		return
 	}
 
-	if err = subscribeToThingsES(ctx, svc, cfg, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to things event store: %s", err))
+	if err = subscribeToClientsES(ctx, svc, cfg, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to clients event store: %s", err))
 		exitCode = 1
 		return
 	}
@@ -200,14 +200,14 @@ func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Du
 	return nil
 }
 
-func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logger *slog.Logger) error {
+func subscribeToClientsES(ctx context.Context, svc lora.Service, cfg config, logger *slog.Logger) error {
 	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
 	if err != nil {
 		return err
 	}
 
 	subConfig := events.SubscriberConfig{
-		Stream:   thingsStream,
+		Stream:   clientsStream,
 		Consumer: cfg.ESConsumerName,
 		Handler:  loraevents.NewEventHandler(svc),
 	}
@@ -219,12 +219,12 @@ func newRouteMapRepository(client *redis.Client, prefix string, logger *slog.Log
 	return loraevents.NewRouteMapRepository(client, prefix)
 }
 
-func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger *slog.Logger) lora.Service {
-	thingsRM := newRouteMapRepository(rmConn, thingsRMPrefix, logger)
+func newService(pub messaging.Publisher, rmConn *redis.Client, clientsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger *slog.Logger) lora.Service {
+	clientsRM := newRouteMapRepository(rmConn, clientsRMPrefix, logger)
 	chansRM := newRouteMapRepository(rmConn, channelsRMPrefix, logger)
 	connsRM := newRouteMapRepository(rmConn, connsRMPrefix, logger)
 
-	svc := lora.New(pub, thingsRM, chansRM, connsRM)
+	svc := lora.New(pub, clientsRM, chansRM, connsRM)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("lora_adapter", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

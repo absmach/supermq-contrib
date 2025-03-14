@@ -6,7 +6,7 @@ filename: "{{.InterfaceName}}.go"
 outpkg: "mocks"
 boilerplate-file: "./tools/config/boilerplate.txt"
 packages:
-  github.com/absmach/magistrala:
+  github.com/absmach/supermq:
     interfaces:
       AuthServiceClient:
         config:

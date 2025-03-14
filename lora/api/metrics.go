@@ -30,31 +30,31 @@ func MetricsMiddleware(svc lora.Service, counter metrics.Counter, latency metric
 	}
 }
 
-func (mm *metricsMiddleware) CreateThing(ctx context.Context, thingID, loraDevEUI string) error {
+func (mm *metricsMiddleware) CreateClient(ctx context.Context, clientID, loraDevEUI string) error {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "create_thing").Add(1)
-		mm.latency.With("method", "create_thing").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "create_client").Add(1)
+		mm.latency.With("method", "create_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateThing(ctx, thingID, loraDevEUI)
+	return mm.svc.CreateClient(ctx, clientID, loraDevEUI)
 }
 
-func (mm *metricsMiddleware) UpdateThing(ctx context.Context, thingID, loraDevEUI string) error {
+func (mm *metricsMiddleware) UpdateClient(ctx context.Context, clientID, loraDevEUI string) error {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "update_thing").Add(1)
-		mm.latency.With("method", "update_thing").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "update_client").Add(1)
+		mm.latency.With("method", "update_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateThing(ctx, thingID, loraDevEUI)
+	return mm.svc.UpdateClient(ctx, clientID, loraDevEUI)
 }
 
-func (mm *metricsMiddleware) RemoveThing(ctx context.Context, thingID string) error {
+func (mm *metricsMiddleware) RemoveClient(ctx context.Context, clientID string) error {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "remove_thing").Add(1)
-		mm.latency.With("method", "remove_thing").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "remove_client").Add(1)
+		mm.latency.With("method", "remove_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.RemoveThing(ctx, thingID)
+	return mm.svc.RemoveClient(ctx, clientID)
 }
 
 func (mm *metricsMiddleware) CreateChannel(ctx context.Context, chanID, loraApp string) error {
@@ -84,22 +84,22 @@ func (mm *metricsMiddleware) RemoveChannel(ctx context.Context, chanID string) e
 	return mm.svc.RemoveChannel(ctx, chanID)
 }
 
-func (mm *metricsMiddleware) ConnectThing(ctx context.Context, chanID, thingID string) error {
+func (mm *metricsMiddleware) ConnectClient(ctx context.Context, chanID, clientID string) error {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "connect_thing").Add(1)
-		mm.latency.With("method", "connect_thing").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "connect_client").Add(1)
+		mm.latency.With("method", "connect_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ConnectThing(ctx, chanID, thingID)
+	return mm.svc.ConnectClient(ctx, chanID, clientID)
 }
 
-func (mm *metricsMiddleware) DisconnectThing(ctx context.Context, chanID, thingID string) error {
+func (mm *metricsMiddleware) DisconnectClient(ctx context.Context, chanID, clientID string) error {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "disconnect_thing").Add(1)
-		mm.latency.With("method", "disconnect_thing").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "disconnect_client").Add(1)
+		mm.latency.With("method", "disconnect_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.DisconnectThing(ctx, chanID, thingID)
+	return mm.svc.DisconnectClient(ctx, chanID, clientID)
 }
 
 func (mm *metricsMiddleware) Publish(ctx context.Context, msg *lora.Message) error {

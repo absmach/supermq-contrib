@@ -12,7 +12,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
-const streamID = "magistrala.twins"
+const streamID = "supermq.twins"
 
 var _ twins.Service = (*eventStore)(nil)
 
@@ -21,7 +21,7 @@ type eventStore struct {
 	svc twins.Service
 }
 
-// NewEventStoreMiddleware returns wrapper around things service that sends
+// NewEventStoreMiddleware returns wrapper around clients service that sends
 // events to event store.
 func NewEventStoreMiddleware(ctx context.Context, svc twins.Service, url string) (twins.Service, error) {
 	publisher, err := store.NewPublisher(ctx, url, streamID)

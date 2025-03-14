@@ -18,7 +18,7 @@ import (
 	"github.com/absmach/supermq-contrib/twins"
 	httpapi "github.com/absmach/supermq-contrib/twins/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -87,7 +87,7 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func newServer(svc twins.Service) *httptest.Server {
-	logger := mglog.NewMock()
+	logger := smqlog.NewMock()
 	mux := httpapi.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }

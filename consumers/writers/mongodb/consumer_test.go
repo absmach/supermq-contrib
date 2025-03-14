@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/supermq-contrib/consumers/writers/mongodb"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/gofrs/uuid"
@@ -25,7 +25,7 @@ import (
 var (
 	port        string
 	addr        string
-	testLog, _  = mglog.New(os.Stdout, "info")
+	testLog, _  = smqlog.New(os.Stdout, "info")
 	testDB      = "test"
 	collection  = "messages"
 	msgsNum     = 100

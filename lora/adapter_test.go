@@ -18,30 +18,30 @@ import (
 )
 
 const (
-	thingID  = "thingID-1"
-	chanID   = "chanID-1"
-	devEUI   = "devEUI-1"
-	appID    = "appID-1"
-	thingID2 = "thingID-2"
-	chanID2  = "chanID-2"
-	devEUI2  = "devEUI-2"
-	appID2   = "appID-2"
-	msg      = `[{"bn":"msg-base-name","n":"temperature","v": 17},{"n":"humidity","v": 56}]`
-	invalid  = "wrong"
+	clientID  = "clientID-1"
+	chanID    = "chanID-1"
+	devEUI    = "devEUI-1"
+	appID     = "appID-1"
+	clientID2 = "clientID-2"
+	chanID2   = "chanID-2"
+	devEUI2   = "devEUI-2"
+	appID2    = "appID-2"
+	msg       = `[{"bn":"msg-base-name","n":"temperature","v": 17},{"n":"humidity","v": 56}]`
+	invalid   = "wrong"
 )
 
 var (
-	pub                           *pubmocks.PubSub
-	thingsRM, channelsRM, connsRM *mocks.RouteMapRepository
+	pub                            *pubmocks.PubSub
+	clientsRM, channelsRM, connsRM *mocks.RouteMapRepository
 )
 
 func newService() lora.Service {
 	pub = new(pubmocks.PubSub)
-	thingsRM = new(mocks.RouteMapRepository)
+	clientsRM = new(mocks.RouteMapRepository)
 	channelsRM = new(mocks.RouteMapRepository)
 	connsRM = new(mocks.RouteMapRepository)
 
-	return lora.New(pub, thingsRM, channelsRM, connsRM)
+	return lora.New(pub, clientsRM, channelsRM, connsRM)
 }
 
 func TestPublish(t *testing.T) {
@@ -53,7 +53,7 @@ func TestPublish(t *testing.T) {
 		desc           string
 		err            error
 		msg            lora.Message
-		getThingErr    error
+		getClientErr   error
 		getChannelErr  error
 		connectionsErr error
 		publishErr     error
@@ -66,7 +66,7 @@ func TestPublish(t *testing.T) {
 				DevEUI:        devEUI,
 				Data:          msgBase64,
 			},
-			getThingErr:    nil,
+			getClientErr:   nil,
 			getChannelErr:  nil,
 			connectionsErr: nil,
 			publishErr:     nil,
@@ -79,7 +79,7 @@ func TestPublish(t *testing.T) {
 				DevEUI:        devEUI,
 				Data:          "wrong",
 			},
-			getThingErr:    nil,
+			getClientErr:   nil,
 			getChannelErr:  nil,
 			connectionsErr: nil,
 			publishErr:     errors.New("Failed publishing"),
@@ -100,7 +100,7 @@ func TestPublish(t *testing.T) {
 				ApplicationID: appID,
 				DevEUI:        "wrong",
 			},
-			getThingErr: lora.ErrNotFoundDev,
+			getClientErr: lora.ErrNotFoundDev,
 		},
 		{
 			desc: "publish message with non existing connection route-map",
@@ -132,7 +132,7 @@ func TestPublish(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := thingsRM.On("Get", context.Background(), tc.msg.DevEUI).Return(tc.msg.DevEUI, tc.getThingErr)
+		repoCall := clientsRM.On("Get", context.Background(), tc.msg.DevEUI).Return(tc.msg.DevEUI, tc.getClientErr)
 		repoCall1 := channelsRM.On("Get", context.Background(), tc.msg.ApplicationID).Return(tc.msg.ApplicationID, tc.getChannelErr)
 		repoCall2 := connsRM.On("Get", context.Background(), mock.Anything).Return("", tc.connectionsErr)
 		repoCall3 := pub.On("Publish", context.Background(), tc.msg.ApplicationID, mock.Anything).Return(tc.publishErr)
@@ -182,83 +182,83 @@ func TestCreateChannel(t *testing.T) {
 	}
 }
 
-func TestCreateThing(t *testing.T) {
+func TestCreateClient(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
-		desc    string
-		err     error
-		ThingID string
-		DevEUI  string
+		desc     string
+		err      error
+		ClientID string
+		DevEUI   string
 	}{
 		{
-			desc:    "create thing with valid data",
-			err:     nil,
-			ThingID: thingID,
-			DevEUI:  devEUI,
+			desc:     "create client with valid data",
+			err:      nil,
+			ClientID: clientID,
+			DevEUI:   devEUI,
 		},
 		{
-			desc:    "create thing with empty thingID",
-			err:     lora.ErrNotFoundDev,
-			ThingID: "",
-			DevEUI:  devEUI,
+			desc:     "create client with empty clientID",
+			err:      lora.ErrNotFoundDev,
+			ClientID: "",
+			DevEUI:   devEUI,
 		},
 		{
-			desc:    "create thing with empty devEUI",
-			err:     lora.ErrNotFoundDev,
-			ThingID: thingID,
-			DevEUI:  "",
+			desc:     "create client with empty devEUI",
+			err:      lora.ErrNotFoundDev,
+			ClientID: clientID,
+			DevEUI:   "",
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := thingsRM.On("Save", context.Background(), tc.ThingID, tc.DevEUI).Return(tc.err)
-		err := svc.CreateThing(context.Background(), tc.ThingID, tc.DevEUI)
+		repoCall := clientsRM.On("Save", context.Background(), tc.ClientID, tc.DevEUI).Return(tc.err)
+		err := svc.CreateClient(context.Background(), tc.ClientID, tc.DevEUI)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}
 }
 
-func TestConnectThing(t *testing.T) {
+func TestConnectClient(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
 		desc          string
 		err           error
 		channelID     string
-		thingID       string
-		getThingErr   error
+		clientID      string
+		getClientErr  error
 		getChannelErr error
 	}{
 		{
-			desc:          "connect thing with valid data",
+			desc:          "connect client with valid data",
 			err:           nil,
 			channelID:     chanID,
-			thingID:       thingID,
-			getThingErr:   nil,
+			clientID:      clientID,
+			getClientErr:  nil,
 			getChannelErr: nil,
 		},
 		{
-			desc:        "connect thing with non existing thing",
-			err:         lora.ErrNotFoundDev,
-			channelID:   chanID,
-			thingID:     invalid,
-			getThingErr: lora.ErrNotFoundDev,
+			desc:         "connect client with non existing client",
+			err:          lora.ErrNotFoundDev,
+			channelID:    chanID,
+			clientID:     invalid,
+			getClientErr: lora.ErrNotFoundDev,
 		},
 		{
-			desc:          "connect thing with non existing channel",
+			desc:          "connect client with non existing channel",
 			err:           lora.ErrNotFoundApp,
 			channelID:     invalid,
-			thingID:       thingID,
+			clientID:      clientID,
 			getChannelErr: lora.ErrNotFoundApp,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := thingsRM.On("Get", context.Background(), tc.thingID).Return(devEUI, tc.getThingErr)
+		repoCall := clientsRM.On("Get", context.Background(), tc.clientID).Return(devEUI, tc.getClientErr)
 		repoCall1 := channelsRM.On("Get", context.Background(), tc.channelID).Return(appID, tc.getChannelErr)
 		repoCall2 := connsRM.On("Save", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.ConnectThing(context.Background(), tc.channelID, tc.thingID)
+		err := svc.ConnectClient(context.Background(), tc.channelID, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -266,46 +266,46 @@ func TestConnectThing(t *testing.T) {
 	}
 }
 
-func TestDisconnectThing(t *testing.T) {
+func TestDisconnectClient(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
 		desc          string
 		err           error
 		channelID     string
-		thingID       string
-		getThingErr   error
+		clientID      string
+		getClientErr  error
 		getChannelErr error
 	}{
 		{
-			desc:          "disconnect thing with valid data",
+			desc:          "disconnect client with valid data",
 			err:           nil,
 			channelID:     chanID,
-			thingID:       thingID,
-			getThingErr:   nil,
+			clientID:      clientID,
+			getClientErr:  nil,
 			getChannelErr: nil,
 		},
 		{
-			desc:        "disconnect thing with non existing thing ID",
-			err:         lora.ErrNotFoundDev,
-			channelID:   chanID,
-			thingID:     invalid,
-			getThingErr: lora.ErrNotFoundDev,
+			desc:         "disconnect client with non existing client ID",
+			err:          lora.ErrNotFoundDev,
+			channelID:    chanID,
+			clientID:     invalid,
+			getClientErr: lora.ErrNotFoundDev,
 		},
 		{
-			desc:          "disconnect thing with non existing channel",
+			desc:          "disconnect client with non existing channel",
 			err:           lora.ErrNotFoundApp,
 			channelID:     invalid,
-			thingID:       thingID,
+			clientID:      clientID,
 			getChannelErr: lora.ErrNotFoundApp,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := thingsRM.On("Get", context.Background(), tc.thingID).Return(devEUI, tc.getThingErr)
+		repoCall := clientsRM.On("Get", context.Background(), tc.clientID).Return(devEUI, tc.getClientErr)
 		repoCall1 := channelsRM.On("Get", context.Background(), tc.channelID).Return(appID, tc.getChannelErr)
 		repoCall2 := connsRM.On("Remove", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.DisconnectThing(context.Background(), tc.channelID, tc.thingID)
+		err := svc.DisconnectClient(context.Background(), tc.channelID, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -346,34 +346,34 @@ func TestRemoveChannel(t *testing.T) {
 	}
 }
 
-func TestRemoveThing(t *testing.T) {
+func TestRemoveClient(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
-		desc    string
-		err     error
-		ThingID string
+		desc     string
+		err      error
+		ClientID string
 	}{
 		{
-			desc:    "remove thing with valid data",
-			err:     nil,
-			ThingID: thingID,
+			desc:     "remove client with valid data",
+			err:      nil,
+			ClientID: clientID,
 		},
 		{
-			desc:    "remove thing with non existing thing",
-			err:     lora.ErrNotFoundDev,
-			ThingID: invalid,
+			desc:     "remove client with non existing client",
+			err:      lora.ErrNotFoundDev,
+			ClientID: invalid,
 		},
 		{
-			desc:    "remove thing with empty thingID",
-			err:     lora.ErrNotFoundDev,
-			ThingID: "",
+			desc:     "remove client with empty clientID",
+			err:      lora.ErrNotFoundDev,
+			ClientID: "",
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := thingsRM.On("Remove", context.Background(), tc.ThingID).Return(tc.err)
-		err := svc.RemoveThing(context.Background(), tc.ThingID)
+		repoCall := clientsRM.On("Remove", context.Background(), tc.ClientID).Return(tc.err)
+		err := svc.RemoveClient(context.Background(), tc.ClientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}
@@ -428,50 +428,50 @@ func TestUpdateChannel(t *testing.T) {
 	}
 }
 
-func TestUpdateThing(t *testing.T) {
+func TestUpdateClient(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
-		desc    string
-		err     error
-		ThingID string
-		DevEUI  string
+		desc     string
+		err      error
+		ClientID string
+		DevEUI   string
 	}{
 		{
-			desc:    "update thing with valid data",
-			err:     nil,
-			ThingID: thingID,
-			DevEUI:  devEUI,
+			desc:     "update client with valid data",
+			err:      nil,
+			ClientID: clientID,
+			DevEUI:   devEUI,
 		},
 		{
-			desc:    "update thing with non existing thing",
-			err:     lora.ErrNotFoundDev,
-			ThingID: invalid,
-			DevEUI:  devEUI,
+			desc:     "update client with non existing client",
+			err:      lora.ErrNotFoundDev,
+			ClientID: invalid,
+			DevEUI:   devEUI,
 		},
 		{
-			desc:    "update thing with empty thingID",
-			err:     lora.ErrNotFoundDev,
-			ThingID: "",
-			DevEUI:  devEUI,
+			desc:     "update client with empty clientID",
+			err:      lora.ErrNotFoundDev,
+			ClientID: "",
+			DevEUI:   devEUI,
 		},
 		{
-			desc:    "update thing with empty devEUI",
-			err:     lora.ErrNotFoundDev,
-			ThingID: thingID,
-			DevEUI:  "",
+			desc:     "update client with empty devEUI",
+			err:      lora.ErrNotFoundDev,
+			ClientID: clientID,
+			DevEUI:   "",
 		},
 		{
-			desc:    "update thing with non existing devEUI",
-			err:     lora.ErrNotFoundDev,
-			ThingID: thingID,
-			DevEUI:  invalid,
+			desc:     "update client with non existing devEUI",
+			err:      lora.ErrNotFoundDev,
+			ClientID: clientID,
+			DevEUI:   invalid,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := thingsRM.On("Save", context.Background(), tc.ThingID, tc.DevEUI).Return(tc.err)
-		err := svc.UpdateThing(context.Background(), tc.ThingID, tc.DevEUI)
+		repoCall := clientsRM.On("Save", context.Background(), tc.ClientID, tc.DevEUI).Return(tc.err)
+		err := svc.UpdateClient(context.Background(), tc.ClientID, tc.DevEUI)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}

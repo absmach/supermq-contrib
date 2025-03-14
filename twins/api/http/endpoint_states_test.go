@@ -16,7 +16,7 @@ import (
 	"github.com/absmach/supermq-contrib/twins"
 	"github.com/absmach/supermq-contrib/twins/mocks"
 	authmocks "github.com/absmach/supermq/auth/mocks"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +56,7 @@ func NewService() (twins.Service, *authmocks.AuthClient, *mocks.TwinRepository, 
 	subs := map[string]string{"chanID": "chanID"}
 	broker := mocks.NewBroker(subs)
 
-	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", mglog.NewMock()), auth, twinsRepo, twinCache, statesRepo
+	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", smqlog.NewMock()), auth, twinsRepo, twinCache, statesRepo
 }
 
 func TestListStates(t *testing.T) {

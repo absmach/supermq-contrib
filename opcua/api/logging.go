@@ -28,57 +28,57 @@ func LoggingMiddleware(svc opcua.Service, logger *slog.Logger) opcua.Service {
 	}
 }
 
-func (lm loggingMiddleware) CreateThing(ctx context.Context, mgxThing, opcuaNodeID string) (err error) {
+func (lm loggingMiddleware) CreateClient(ctx context.Context, mgxClient, opcuaNodeID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", mgxThing),
+			slog.String("client_id", mgxClient),
 			slog.String("node_id", opcuaNodeID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Create thing route-map failed", args...)
+			lm.logger.Warn("Create client route-map failed", args...)
 			return
 		}
-		lm.logger.Info("Create thing route-map completed successfully", args...)
+		lm.logger.Info("Create client route-map completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.CreateThing(ctx, mgxThing, opcuaNodeID)
+	return lm.svc.CreateClient(ctx, mgxClient, opcuaNodeID)
 }
 
-func (lm loggingMiddleware) UpdateThing(ctx context.Context, mgxThing, opcuaNodeID string) (err error) {
+func (lm loggingMiddleware) UpdateClient(ctx context.Context, mgxClient, opcuaNodeID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", mgxThing),
+			slog.String("client_id", mgxClient),
 			slog.String("node_id", opcuaNodeID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update thing route-map failed", args...)
+			lm.logger.Warn("Update client route-map failed", args...)
 			return
 		}
-		lm.logger.Info("Update thing route-map completed successfully", args...)
+		lm.logger.Info("Update client route-map completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.UpdateThing(ctx, mgxThing, opcuaNodeID)
+	return lm.svc.UpdateClient(ctx, mgxClient, opcuaNodeID)
 }
 
-func (lm loggingMiddleware) RemoveThing(ctx context.Context, mgxThing string) (err error) {
+func (lm loggingMiddleware) RemoveClient(ctx context.Context, mgxClient string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", mgxThing),
+			slog.String("client_id", mgxClient),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove thing route-map failed", args...)
+			lm.logger.Warn("Remove client route-map failed", args...)
 			return
 		}
-		lm.logger.Info("Remove thing route-map completed successfully", args...)
+		lm.logger.Info("Remove client route-map completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.RemoveThing(ctx, mgxThing)
+	return lm.svc.RemoveClient(ctx, mgxClient)
 }
 
 func (lm loggingMiddleware) CreateChannel(ctx context.Context, mgxChan, opcuaServerURI string) (err error) {
@@ -134,40 +134,40 @@ func (lm loggingMiddleware) RemoveChannel(ctx context.Context, mgxChanID string)
 	return lm.svc.RemoveChannel(ctx, mgxChanID)
 }
 
-func (lm loggingMiddleware) ConnectThing(ctx context.Context, mgxChanID string, mgxThingIDs []string) (err error) {
+func (lm loggingMiddleware) ConnectClient(ctx context.Context, mgxChanID string, mgxClientIDs []string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("channel_id", mgxChanID),
-			slog.Any("thing_ids", mgxThingIDs),
+			slog.Any("client_ids", mgxClientIDs),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Connect thing to channel failed", args...)
+			lm.logger.Warn("Connect client to channel failed", args...)
 			return
 		}
-		lm.logger.Info("Connect thing to channel completed successfully", args...)
+		lm.logger.Info("Connect client to channel completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ConnectThing(ctx, mgxChanID, mgxThingIDs)
+	return lm.svc.ConnectClient(ctx, mgxChanID, mgxClientIDs)
 }
 
-func (lm loggingMiddleware) DisconnectThing(ctx context.Context, mgxChanID string, mgxThingIDs []string) (err error) {
+func (lm loggingMiddleware) DisconnectClient(ctx context.Context, mgxChanID string, mgxClientIDs []string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("channel_id", mgxChanID),
-			slog.Any("thing_ids", mgxThingIDs),
+			slog.Any("client_ids", mgxClientIDs),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Disconnect thing from channel failed", args...)
+			lm.logger.Warn("Disconnect client from channel failed", args...)
 			return
 		}
-		lm.logger.Info("Disconnect thing from channel completed successfully", args...)
+		lm.logger.Info("Disconnect client from channel completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.DisconnectThing(ctx, mgxChanID, mgxThingIDs)
+	return lm.svc.DisconnectClient(ctx, mgxChanID, mgxClientIDs)
 }
 
 func (lm loggingMiddleware) Browse(ctx context.Context, serverURI, namespace, identifier, identifierType string) (nodes []opcua.BrowsedNode, err error) {

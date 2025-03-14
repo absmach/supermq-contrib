@@ -2,5 +2,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package smpp contains the domain concept definitions needed to
-// support Magistrala SMS notifications.
+// support SupeMQ SMS notifications.
 package smpp

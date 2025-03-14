@@ -2,86 +2,86 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ###
-# This docker-compose file contains optional InfluxDB-reader service for the Magistrala
+# This docker-compose file contains optional InfluxDB-reader service for the SupeMQ
 # platform. Since this service is optional, this file is dependent on the docker-compose.yml
 # file from <project_root>/docker/. In order to run this service, core services,
 # as well as the network from the core composition, should be already running.
 ###
 
 networks:
-  magistrala-base-net:
+  supermq-base-net:
 
 services:
   influxdb-reader:
-    image: magistrala/influxdb-reader:${MG_RELEASE_TAG}
-    container_name: magistrala-influxdb-reader
+    image: supermq-contrib/influxdb-reader:${SMQ_RELEASE_TAG}
+    container_name: supermq-contrib-influxdb-reader
     restart: on-failure
     environment:
-      MG_INFLUX_READER_LOG_LEVEL: ${MG_INFLUX_READER_LOG_LEVEL}
-      MG_INFLUX_READER_HTTP_HOST: ${MG_INFLUX_READER_HTTP_HOST}
-      MG_INFLUX_READER_HTTP_PORT: ${MG_INFLUX_READER_HTTP_PORT}
-      MG_INFLUX_READER_HTTP_SERVER_CERT: ${MG_INFLUX_READER_HTTP_SERVER_CERT}
-      MG_INFLUX_READER_HTTP_SERVER_KEY: ${MG_INFLUX_READER_HTTP_SERVER_KEY}
-      MG_INFLUXDB_PROTOCOL: ${MG_INFLUXDB_PROTOCOL}
-      MG_INFLUXDB_HOST: ${MG_INFLUXDB_HOST}
-      MG_INFLUXDB_PORT: ${MG_INFLUXDB_PORT}
-      MG_INFLUXDB_ADMIN_USER: ${MG_INFLUXDB_ADMIN_USER}
-      MG_INFLUXDB_ADMIN_PASSWORD: ${MG_INFLUXDB_ADMIN_PASSWORD}
-      MG_INFLUXDB_NAME: ${MG_INFLUXDB_NAME}
-      MG_INFLUXDB_BUCKET: ${MG_INFLUXDB_BUCKET}
-      MG_INFLUXDB_ORG: ${MG_INFLUXDB_ORG}
-      MG_INFLUXDB_TOKEN: ${MG_INFLUXDB_TOKEN}
-      MG_INFLUXDB_DBURL: ${MG_INFLUXDB_DBURL}
-      MG_INFLUXDB_USER_AGENT: ${MG_INFLUXDB_USER_AGENT}
-      MG_INFLUXDB_TIMEOUT: ${MG_INFLUXDB_TIMEOUT}
-      MG_INFLUXDB_INSECURE_SKIP_VERIFY: ${MG_INFLUXDB_INSECURE_SKIP_VERIFY}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
-      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_INFLUX_READER_INSTANCE_ID: ${MG_INFLUX_READER_INSTANCE_ID}
+      SMQ_INFLUX_READER_LOG_LEVEL: ${SMQ_INFLUX_READER_LOG_LEVEL}
+      SMQ_INFLUX_READER_HTTP_HOST: ${SMQ_INFLUX_READER_HTTP_HOST}
+      SMQ_INFLUX_READER_HTTP_PORT: ${SMQ_INFLUX_READER_HTTP_PORT}
+      SMQ_INFLUX_READER_HTTP_SERVER_CERT: ${SMQ_INFLUX_READER_HTTP_SERVER_CERT}
+      SMQ_INFLUX_READER_HTTP_SERVER_KEY: ${SMQ_INFLUX_READER_HTTP_SERVER_KEY}
+      SMQ_INFLUXDB_PROTOCOL: ${SMQ_INFLUXDB_PROTOCOL}
+      SMQ_INFLUXDB_HOST: ${SMQ_INFLUXDB_HOST}
+      SMQ_INFLUXDB_PORT: ${SMQ_INFLUXDB_PORT}
+      SMQ_INFLUXDB_ADMIN_USER: ${SMQ_INFLUXDB_ADMIN_USER}
+      SMQ_INFLUXDB_ADMIN_PASSWORD: ${SMQ_INFLUXDB_ADMIN_PASSWORD}
+      SMQ_INFLUXDB_NAME: ${SMQ_INFLUXDB_NAME}
+      SMQ_INFLUXDB_BUCKET: ${SMQ_INFLUXDB_BUCKET}
+      SMQ_INFLUXDB_ORG: ${SMQ_INFLUXDB_ORG}
+      SMQ_INFLUXDB_TOKEN: ${SMQ_INFLUXDB_TOKEN}
+      SMQ_INFLUXDB_DBURL: ${SMQ_INFLUXDB_DBURL}
+      SMQ_INFLUXDB_USER_AGENT: ${SMQ_INFLUXDB_USER_AGENT}
+      SMQ_INFLUXDB_TIMEOUT: ${SMQ_INFLUXDB_TIMEOUT}
+      SMQ_INFLUXDB_INSECURE_SKIP_VERIFY: ${SMQ_INFLUXDB_INSECURE_SKIP_VERIFY}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_INFLUX_READER_INSTANCE_ID: ${SMQ_INFLUX_READER_INSTANCE_ID}
     ports:
-      - ${MG_INFLUX_READER_HTTP_PORT}:${MG_INFLUX_READER_HTTP_PORT}
+      - ${SMQ_INFLUX_READER_HTTP_PORT}:${SMQ_INFLUX_READER_HTTP_PORT}
     networks:
-      - magistrala-base-net
+      - supermq-base-net
     volumes:
       - ../../ssl/certs:/etc/ssl/certs
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

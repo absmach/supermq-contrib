@@ -21,12 +21,12 @@ type Config struct {
 	Protocol           string        `env:"PROTOCOL"              envDefault:"http"`
 	Host               string        `env:"HOST"                  envDefault:"localhost"`
 	Port               string        `env:"PORT"                  envDefault:"8086"`
-	Username           string        `env:"ADMIN_USER"            envDefault:"magistrala"`
-	Password           string        `env:"ADMIN_PASSWORD"        envDefault:"magistrala"`
-	DBName             string        `env:"NAME"                  envDefault:"magistrala"`
-	Bucket             string        `env:"BUCKET"                envDefault:"magistrala-bucket"`
-	Org                string        `env:"ORG"                   envDefault:"magistrala"`
-	Token              string        `env:"TOKEN"                 envDefault:"magistrala-token"`
+	Username           string        `env:"ADMIN_USER"            envDefault:"supermq"`
+	Password           string        `env:"ADMIN_PASSWORD"        envDefault:"supermq"`
+	DBName             string        `env:"NAME"                  envDefault:"supermq"`
+	Bucket             string        `env:"BUCKET"                envDefault:"supermq-bucket"`
+	Org                string        `env:"ORG"                   envDefault:"supermq"`
+	Token              string        `env:"TOKEN"                 envDefault:"supermq-token"`
 	DBUrl              string        `env:"DBURL"                 envDefault:""`
 	UserAgent          string        `env:"USER_AGENT"            envDefault:"InfluxDBClient"`
 	Timeout            time.Duration `env:"TIMEOUT"` // Influxdb client configuration by default has no timeout duration , this field will not have a fallback default timeout duration. Reference: https://pkg.go.dev/github.com/influxdata/influxdb@v1.10.0/client/v2#HTTPConfig

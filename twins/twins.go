@@ -27,7 +27,7 @@ type Definition struct {
 	Delta      int64       `json:"delta"`
 }
 
-// Twin is a Magistrala data system representation. Each twin is owned
+// Twin is a SupeMQ data system representation. Each twin is owned
 // by a single user, and is assigned with the unique identifier.
 type Twin struct {
 	Owner       string

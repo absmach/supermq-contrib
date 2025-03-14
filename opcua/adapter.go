@@ -17,14 +17,14 @@ import (
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
-	// CreateThing creates thingID:OPC-UA-nodeID route-map
-	CreateThing(ctx context.Context, thingID, nodeID string) error
+	// CreateClient creates clientID:OPC-UA-nodeID route-map
+	CreateClient(ctx context.Context, clientID, nodeID string) error
 
-	// UpdateThing updates thingID:OPC-UA-nodeID route-map
-	UpdateThing(ctx context.Context, thingID, nodeID string) error
+	// UpdateClient updates clientID:OPC-UA-nodeID route-map
+	UpdateClient(ctx context.Context, clientID, nodeID string) error
 
-	// RemoveThing removes thingID:OPC-UA-nodeID route-map
-	RemoveThing(ctx context.Context, thingID string) error
+	// RemoveClient removes clientID:OPC-UA-nodeID route-map
+	RemoveClient(ctx context.Context, clientID string) error
 
 	// CreateChannel creates channelID:OPC-UA-serverURI route-map
 	CreateChannel(ctx context.Context, chanID, serverURI string) error
@@ -35,11 +35,11 @@ type Service interface {
 	// RemoveChannel removes channelID:OPC-UA-serverURI route-map
 	RemoveChannel(ctx context.Context, chanID string) error
 
-	// ConnectThing creates thingID:channelID route-map
-	ConnectThing(ctx context.Context, chanID string, thingIDs []string) error
+	// ConnectClient creates clientID:channelID route-map
+	ConnectClient(ctx context.Context, chanID string, clientIDs []string) error
 
-	// DisconnectThing removes thingID:channelID route-map
-	DisconnectThing(ctx context.Context, chanID string, thingIDs []string) error
+	// DisconnectClient removes clientID:channelID route-map
+	DisconnectClient(ctx context.Context, chanID string, clientIDs []string) error
 
 	// Browse browses available nodes for a given OPC-UA Server URI and NodeID
 	Browse(ctx context.Context, serverURI, namespace, identifier, identifierType string) ([]BrowsedNode, error)
@@ -49,11 +49,11 @@ type Service interface {
 type Config struct {
 	ServerURI string
 	NodeID    string
-	Interval  string `env:"MG_OPCUA_ADAPTER_INTERVAL_MS"     envDefault:"1000"`
-	Policy    string `env:"MG_OPCUA_ADAPTER_POLICY"          envDefault:""`
-	Mode      string `env:"MG_OPCUA_ADAPTER_MODE"            envDefault:""`
-	CertFile  string `env:"MG_OPCUA_ADAPTER_CERT_FILE"       envDefault:""`
-	KeyFile   string `env:"MG_OPCUA_ADAPTER_KEY_FILE"        envDefault:""`
+	Interval  string `env:"SMQ_OPCUA_ADAPTER_INTERVAL_MS"     envDefault:"1000"`
+	Policy    string `env:"SMQ_OPCUA_ADAPTER_POLICY"          envDefault:""`
+	Mode      string `env:"SMQ_OPCUA_ADAPTER_MODE"            envDefault:""`
+	CertFile  string `env:"SMQ_OPCUA_ADAPTER_CERT_FILE"       envDefault:""`
+	KeyFile   string `env:"SMQ_OPCUA_ADAPTER_KEY_FILE"        envDefault:""`
 }
 
 var (
@@ -64,7 +64,7 @@ var (
 type adapterService struct {
 	subscriber Subscriber
 	browser    Browser
-	thingsRM   RouteMapRepository
+	clientsRM  RouteMapRepository
 	channelsRM RouteMapRepository
 	connectRM  RouteMapRepository
 	cfg        Config
@@ -72,11 +72,11 @@ type adapterService struct {
 }
 
 // New instantiates the OPC-UA adapter implementation.
-func New(sub Subscriber, brow Browser, thingsRM, channelsRM, connectRM RouteMapRepository, cfg Config, log *slog.Logger) Service {
+func New(sub Subscriber, brow Browser, clientsRM, channelsRM, connectRM RouteMapRepository, cfg Config, log *slog.Logger) Service {
 	return &adapterService{
 		subscriber: sub,
 		browser:    brow,
-		thingsRM:   thingsRM,
+		clientsRM:  clientsRM,
 		channelsRM: channelsRM,
 		connectRM:  connectRM,
 		cfg:        cfg,
@@ -84,16 +84,16 @@ func New(sub Subscriber, brow Browser, thingsRM, channelsRM, connectRM RouteMapR
 	}
 }
 
-func (as *adapterService) CreateThing(ctx context.Context, thingID, nodeID string) error {
-	return as.thingsRM.Save(ctx, thingID, nodeID)
+func (as *adapterService) CreateClient(ctx context.Context, clientID, nodeID string) error {
+	return as.clientsRM.Save(ctx, clientID, nodeID)
 }
 
-func (as *adapterService) UpdateThing(ctx context.Context, thingID, nodeID string) error {
-	return as.thingsRM.Save(ctx, thingID, nodeID)
+func (as *adapterService) UpdateClient(ctx context.Context, clientID, nodeID string) error {
+	return as.clientsRM.Save(ctx, clientID, nodeID)
 }
 
-func (as *adapterService) RemoveThing(ctx context.Context, thingID string) error {
-	return as.thingsRM.Remove(ctx, thingID)
+func (as *adapterService) RemoveClient(ctx context.Context, clientID string) error {
+	return as.clientsRM.Remove(ctx, clientID)
 }
 
 func (as *adapterService) CreateChannel(ctx context.Context, chanID, serverURI string) error {
@@ -108,14 +108,14 @@ func (as *adapterService) RemoveChannel(ctx context.Context, chanID string) erro
 	return as.channelsRM.Remove(ctx, chanID)
 }
 
-func (as *adapterService) ConnectThing(ctx context.Context, chanID string, thingIDs []string) error {
+func (as *adapterService) ConnectClient(ctx context.Context, chanID string, clientIDs []string) error {
 	serverURI, err := as.channelsRM.Get(ctx, chanID)
 	if err != nil {
 		return err
 	}
 
-	for _, thingID := range thingIDs {
-		nodeID, err := as.thingsRM.Get(ctx, thingID)
+	for _, clientID := range clientIDs {
+		nodeID, err := as.clientsRM.Get(ctx, clientID)
 		if err != nil {
 			return err
 		}
@@ -123,7 +123,7 @@ func (as *adapterService) ConnectThing(ctx context.Context, chanID string, thing
 		as.cfg.NodeID = nodeID
 		as.cfg.ServerURI = serverURI
 
-		c := fmt.Sprintf("%s:%s", chanID, thingID)
+		c := fmt.Sprintf("%s:%s", chanID, clientID)
 		if err := as.connectRM.Save(ctx, c, c); err != nil {
 			return err
 		}
@@ -189,9 +189,9 @@ func (as *adapterService) Browse(ctx context.Context, serverURI, namespace, iden
 	return nodes, nil
 }
 
-func (as *adapterService) DisconnectThing(ctx context.Context, chanID string, thingIDs []string) error {
-	for _, thingID := range thingIDs {
-		c := fmt.Sprintf("%s:%s", chanID, thingID)
+func (as *adapterService) DisconnectClient(ctx context.Context, chanID string, clientIDs []string) error {
+	for _, clientID := range clientIDs {
+		c := fmt.Sprintf("%s:%s", chanID, clientID)
 		if err := as.connectRM.Remove(ctx, c); err != nil {
 			return err
 		}

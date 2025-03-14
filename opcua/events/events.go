@@ -3,18 +3,18 @@
 
 package events
 
-type createThingEvent struct {
+type createClientEvent struct {
 	id          string
 	opcuaNodeID string
 }
 
-type removeThingEvent struct {
+type removeClientEvent struct {
 	id string
 }
 
-type connectThingEvent struct {
-	chanID   string
-	thingIDs []string
+type connectClientEvent struct {
+	chanID    string
+	clientIDs []string
 }
 
 type createChannelEvent struct {

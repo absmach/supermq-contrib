@@ -16,10 +16,10 @@ const (
 	keyNodeID    = "node_id"
 	keyServerURI = "server_uri"
 
-	thingPrefix = "thing."
-	thingCreate = thingPrefix + "create"
-	thingUpdate = thingPrefix + "update"
-	thingRemove = thingPrefix + "remove"
+	clientPrefix = "client."
+	clientCreate = clientPrefix + "create"
+	clientUpdate = clientPrefix + "update"
+	clientRemove = clientPrefix + "remove"
 
 	channelPrefix     = "channel."
 	channelCreate     = channelPrefix + "create"
@@ -36,7 +36,7 @@ var (
 
 	errMetadataServerURI = errors.New("ServerURI not found in channel metadatada")
 
-	errMetadataNodeID = errors.New("NodeID not found in thing metadatada")
+	errMetadataNodeID = errors.New("NodeID not found in client metadatada")
 )
 
 type eventHandler struct {
@@ -57,23 +57,23 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	}
 
 	switch msg["operation"] {
-	case thingCreate:
-		cte, e := decodeCreateThing(msg)
+	case clientCreate:
+		cte, e := decodeCreateClient(msg)
 		if e != nil {
 			err = e
 			break
 		}
-		err = es.svc.CreateThing(ctx, cte.id, cte.opcuaNodeID)
-	case thingUpdate:
-		ute, e := decodeCreateThing(msg)
+		err = es.svc.CreateClient(ctx, cte.id, cte.opcuaNodeID)
+	case clientUpdate:
+		ute, e := decodeCreateClient(msg)
 		if e != nil {
 			err = e
 			break
 		}
-		err = es.svc.CreateThing(ctx, ute.id, ute.opcuaNodeID)
-	case thingRemove:
-		rte := decodeRemoveThing(msg)
-		err = es.svc.RemoveThing(ctx, rte.id)
+		err = es.svc.CreateClient(ctx, ute.id, ute.opcuaNodeID)
+	case clientRemove:
+		rte := decodeRemoveClient(msg)
+		err = es.svc.RemoveClient(ctx, rte.id)
 	case channelCreate:
 		cce, e := decodeCreateChannel(msg)
 		if e != nil {
@@ -92,11 +92,11 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 		rce := decodeRemoveChannel(msg)
 		err = es.svc.RemoveChannel(ctx, rce.id)
 	case channelConnect:
-		rce := decodeConnectThing(msg)
-		err = es.svc.ConnectThing(ctx, rce.chanID, rce.thingIDs)
+		rce := decodeConnectClient(msg)
+		err = es.svc.ConnectClient(ctx, rce.chanID, rce.clientIDs)
 	case channelDisconnect:
-		rce := decodeDisconnectThing(msg)
-		err = es.svc.DisconnectThing(ctx, rce.chanID, rce.thingIDs)
+		rce := decodeDisconnectClient(msg)
+		err = es.svc.DisconnectClient(ctx, rce.chanID, rce.clientIDs)
 	}
 	if err != nil && err != errMetadataType {
 		return err
@@ -105,34 +105,34 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	return nil
 }
 
-func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
+func decodeCreateClient(event map[string]interface{}) (createClientEvent, error) {
 	metadata := events.Read(event, "metadata", map[string]interface{}{})
 
-	cte := createThingEvent{
+	cte := createClientEvent{
 		id: events.Read(event, "id", ""),
 	}
 
 	metadataOpcua, ok := metadata[keyType]
 	if !ok {
-		return createThingEvent{}, errMetadataType
+		return createClientEvent{}, errMetadataType
 	}
 
 	metadataVal, ok := metadataOpcua.(map[string]interface{})
 	if !ok {
-		return createThingEvent{}, errMetadataFormat
+		return createClientEvent{}, errMetadataFormat
 	}
 
 	val, ok := metadataVal[keyNodeID].(string)
 	if !ok || val == "" {
-		return createThingEvent{}, errMetadataNodeID
+		return createClientEvent{}, errMetadataNodeID
 	}
 
 	cte.opcuaNodeID = val
 	return cte, nil
 }
 
-func decodeRemoveThing(event map[string]interface{}) removeThingEvent {
-	return removeThingEvent{
+func decodeRemoveClient(event map[string]interface{}) removeClientEvent {
+	return removeClientEvent{
 		id: events.Read(event, "id", ""),
 	}
 }
@@ -169,16 +169,16 @@ func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 	}
 }
 
-func decodeConnectThing(event map[string]interface{}) connectThingEvent {
-	return connectThingEvent{
-		chanID:   events.Read(event, "group_id", ""),
-		thingIDs: events.ReadStringSlice(event, "member_ids"),
+func decodeConnectClient(event map[string]interface{}) connectClientEvent {
+	return connectClientEvent{
+		chanID:    events.Read(event, "group_id", ""),
+		clientIDs: events.ReadStringSlice(event, "member_ids"),
 	}
 }
 
-func decodeDisconnectThing(event map[string]interface{}) connectThingEvent {
-	return connectThingEvent{
-		chanID:   events.Read(event, "group_id", ""),
-		thingIDs: events.ReadStringSlice(event, "member_ids"),
+func decodeDisconnectClient(event map[string]interface{}) connectClientEvent {
+	return connectClientEvent{
+		chanID:    events.Read(event, "group_id", ""),
+		clientIDs: events.ReadStringSlice(event, "member_ids"),
 	}
 }

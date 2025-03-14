@@ -10,14 +10,14 @@ import (
 	"os"
 	"testing"
 
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var testLog, _ = mglog.New(os.Stdout, "info")
+var testLog, _ = smqlog.New(os.Stdout, "info")
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

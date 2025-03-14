@@ -10,31 +10,31 @@ default values.
 
 | Variable                         | Description                                                                       | Default                        |
 | -------------------------------- | --------------------------------------------------------------------------------- | ------------------------------ |
-| MG_MONGO_WRITER_LOG_LEVEL        | Log level for MongoDB writer                                                      | info                           |
-| MG_MONGO_WRITER_CONFIG_PATH      | Config file path with Message broker subjects list, payload type and content-type | /config.toml                   |
-| MG_MONGO_WRITER_HTTP_HOST        | Service HTTP host                                                                 | localhost                      |
-| MG_MONGO_WRITER_HTTP_PORT        | Service HTTP port                                                                 | 9010                           |
-| MG_MONGO_WRITER_HTTP_SERVER_CERT | Service HTTP server certificate path                                              | ""                             |
-| MG_MONGO_WRITER_HTTP_SERVER_KEY  | Service HTTP server key                                                           | ""                             |
-| MG_MONGO_NAME                    | Default MongoDB database name                                                     | messages                       |
-| MG_MONGO_HOST                    | Default MongoDB database host                                                     | localhost                      |
-| MG_MONGO_PORT                    | Default MongoDB database port                                                     | 27017                          |
-| MG_MESSAGE_BROKER_URL            | Message broker instance URL                                                       | nats://localhost:4222          |
-| MG_JAEGER_URL                    | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                | Send telemetry to magistrala call home server                                     | true                           |
-| MG_MONGO_WRITER_INSTANCE_ID      | MongoDB writer instance ID                                                        | ""                             |
+| SMQ_MONGO_WRITER_LOG_LEVEL        | Log level for MongoDB writer                                                      | info                           |
+| SMQ_MONGO_WRITER_CONFIG_PATH      | Config file path with Message broker subjects list, payload type and content-type | /config.toml                   |
+| SMQ_MONGO_WRITER_HTTP_HOST        | Service HTTP host                                                                 | localhost                      |
+| SMQ_MONGO_WRITER_HTTP_PORT        | Service HTTP port                                                                 | 9010                           |
+| SMQ_MONGO_WRITER_HTTP_SERVER_CERT | Service HTTP server certificate path                                              | ""                             |
+| SMQ_MONGO_WRITER_HTTP_SERVER_KEY  | Service HTTP server key                                                           | ""                             |
+| SMQ_MONGO_NAME                    | Default MongoDB database name                                                     | messages                       |
+| SMQ_MONGO_HOST                    | Default MongoDB database host                                                     | localhost                      |
+| SMQ_MONGO_PORT                    | Default MongoDB database port                                                     | 27017                          |
+| SMQ_MESSAGE_BROKER_URL            | Message broker instance URL                                                       | nats://localhost:4222          |
+| SMQ_JAEGER_URL                    | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
+| SMQ_SEND_TELEMETRY                | Send telemetry to supermq call home server                                     | true                           |
+| SMQ_MONGO_WRITER_INSTANCE_ID      | MongoDB writer instance ID                                                        | ""                             |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`mongodb-writer`](https://github.com/absmach/magistrala/blob/main/docker/addons/mongodb-writer/docker-compose.yml#L36-L55) service section in docker-compose file to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`mongodb-writer`](https://github.com/absmach/supermq-contrib/blob/main/docker/addons/mongodb-writer/docker-compose.yml#L36-L55) service section in docker-compose file to see how service is deployed.
 
 To start the service, execute the following shell script:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/absmach/magistrala
+git clone https://github.com/absmach/supermq-contrib.git
 
-cd magistrala
+cd supermq-contrib
 
 # compile the mongodb writer
 make mongodb-writer
@@ -43,21 +43,21 @@ make mongodb-writer
 make install
 
 # Set the environment variables and run the service
-MG_MONGO_WRITER_LOG_LEVEL=[MongoDB writer log level] \
-MG_MONGO_WRITER_CONFIG_PATH=[Configuration file path with Message broker subjects list] \
-MG_MONGO_WRITER_HTTP_HOST=[Service HTTP host] \
-MG_MONGO_WRITER_HTTP_PORT=[Service HTTP port] \
-MG_MONGO_WRITER_HTTP_SERVER_CERT=[Service HTTP server certificate] \
-MG_MONGO_WRITER_HTTP_SERVER_KEY=[Service HTTP server key] \
-MG_MONGO_NAME=[MongoDB database name] \
-MG_MONGO_HOST=[MongoDB database host] \
-MG_MONGO_PORT=[MongoDB database port] \
-MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
-MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
-MG_MONGO_WRITER_INSTANCE_ID=[MongoDB writer instance ID] \
+SMQ_MONGO_WRITER_LOG_LEVEL=[MongoDB writer log level] \
+SMQ_MONGO_WRITER_CONFIG_PATH=[Configuration file path with Message broker subjects list] \
+SMQ_MONGO_WRITER_HTTP_HOST=[Service HTTP host] \
+SMQ_MONGO_WRITER_HTTP_PORT=[Service HTTP port] \
+SMQ_MONGO_WRITER_HTTP_SERVER_CERT=[Service HTTP server certificate] \
+SMQ_MONGO_WRITER_HTTP_SERVER_KEY=[Service HTTP server key] \
+SMQ_MONGO_NAME=[MongoDB database name] \
+SMQ_MONGO_HOST=[MongoDB database host] \
+SMQ_MONGO_PORT=[MongoDB database port] \
+SMQ_MESSAGE_BROKER_URL=[Message broker instance URL] \
+SMQ_JAEGER_URL=[Jaeger server URL] \
+SMQ_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
+SMQ_MONGO_WRITER_INSTANCE_ID=[MongoDB writer instance ID] \
 
-$GOBIN/magistrala-mongodb-writer
+$GOBIN/supermq-contrib-mongodb-writer
 ```
 
 ## Usage

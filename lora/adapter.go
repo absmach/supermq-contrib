@@ -33,14 +33,14 @@ var (
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
-	// CreateThing creates thingID:devEUI route-map
-	CreateThing(ctx context.Context, thingID, devEUI string) error
+	// CreateClient creates clientID:devEUI route-map
+	CreateClient(ctx context.Context, clientID, devEUI string) error
 
-	// UpdateThing updates thingID:devEUI route-map
-	UpdateThing(ctx context.Context, thingID, devEUI string) error
+	// UpdateClient updates clientID:devEUI route-map
+	UpdateClient(ctx context.Context, clientID, devEUI string) error
 
-	// RemoveThing removes thingID:devEUI route-map
-	RemoveThing(ctx context.Context, thingID string) error
+	// RemoveClient removes clientID:devEUI route-map
+	RemoveClient(ctx context.Context, clientID string) error
 
 	// CreateChannel creates channelID:appID route-map
 	CreateChannel(ctx context.Context, chanID, appID string) error
@@ -51,13 +51,13 @@ type Service interface {
 	// RemoveChannel removes channelID:appID route-map
 	RemoveChannel(ctx context.Context, chanID string) error
 
-	// ConnectThing creates thingID:channelID route-map
-	ConnectThing(ctx context.Context, chanID, thingID string) error
+	// ConnectClient creates clientID:channelID route-map
+	ConnectClient(ctx context.Context, chanID, clientID string) error
 
-	// DisconnectThing removes thingID:channelID route-map
-	DisconnectThing(ctx context.Context, chanID, thingID string) error
+	// DisconnectClient removes clientID:channelID route-map
+	DisconnectClient(ctx context.Context, chanID, clientID string) error
 
-	// Publish forwards messages from the LoRa MQTT broker to Magistrala Message Broker
+	// Publish forwards messages from the LoRa MQTT broker to SupeMQ Message Broker
 	Publish(ctx context.Context, msg *Message) error
 }
 
@@ -65,25 +65,25 @@ var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
 	publisher  messaging.Publisher
-	thingsRM   RouteMapRepository
+	clientsRM  RouteMapRepository
 	channelsRM RouteMapRepository
 	connectRM  RouteMapRepository
 }
 
 // New instantiates the LoRa adapter implementation.
-func New(publisher messaging.Publisher, thingsRM, channelsRM, connectRM RouteMapRepository) Service {
+func New(publisher messaging.Publisher, clientsRM, channelsRM, connectRM RouteMapRepository) Service {
 	return &adapterService{
 		publisher:  publisher,
-		thingsRM:   thingsRM,
+		clientsRM:  clientsRM,
 		channelsRM: channelsRM,
 		connectRM:  connectRM,
 	}
 }
 
-// Publish forwards messages from Lora MQTT broker to Magistrala Message broker.
+// Publish forwards messages from Lora MQTT broker to SupeMQ Message broker.
 func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 	// Get route map of lora application
-	thingID, err := as.thingsRM.Get(ctx, m.DevEUI)
+	clientID, err := as.clientsRM.Get(ctx, m.DevEUI)
 	if err != nil {
 		return ErrNotFoundDev
 	}
@@ -94,7 +94,7 @@ func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 		return ErrNotFoundApp
 	}
 
-	c := fmt.Sprintf("%s:%s", chanID, thingID)
+	c := fmt.Sprintf("%s:%s", chanID, clientID)
 	if _, err := as.connectRM.Get(ctx, c); err != nil {
 		return ErrNotConnected
 	}
@@ -116,9 +116,9 @@ func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 		payload = jo
 	}
 
-	// Publish on Magistrala Message broker
+	// Publish on SupeMQ Message broker
 	msg := messaging.Message{
-		Publisher: thingID,
+		Publisher: clientID,
 		Protocol:  protocol,
 		Channel:   chanID,
 		Payload:   payload,
@@ -128,16 +128,16 @@ func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 	return as.publisher.Publish(ctx, msg.Channel, &msg)
 }
 
-func (as *adapterService) CreateThing(ctx context.Context, thingID, devEUI string) error {
-	return as.thingsRM.Save(ctx, thingID, devEUI)
+func (as *adapterService) CreateClient(ctx context.Context, clientID, devEUI string) error {
+	return as.clientsRM.Save(ctx, clientID, devEUI)
 }
 
-func (as *adapterService) UpdateThing(ctx context.Context, thingID, devEUI string) error {
-	return as.thingsRM.Save(ctx, thingID, devEUI)
+func (as *adapterService) UpdateClient(ctx context.Context, clientID, devEUI string) error {
+	return as.clientsRM.Save(ctx, clientID, devEUI)
 }
 
-func (as *adapterService) RemoveThing(ctx context.Context, thingID string) error {
-	return as.thingsRM.Remove(ctx, thingID)
+func (as *adapterService) RemoveClient(ctx context.Context, clientID string) error {
+	return as.clientsRM.Remove(ctx, clientID)
 }
 
 func (as *adapterService) CreateChannel(ctx context.Context, chanID, appID string) error {
@@ -152,28 +152,28 @@ func (as *adapterService) RemoveChannel(ctx context.Context, chanID string) erro
 	return as.channelsRM.Remove(ctx, chanID)
 }
 
-func (as *adapterService) ConnectThing(ctx context.Context, chanID, thingID string) error {
+func (as *adapterService) ConnectClient(ctx context.Context, chanID, clientID string) error {
 	if _, err := as.channelsRM.Get(ctx, chanID); err != nil {
 		return ErrNotFoundApp
 	}
 
-	if _, err := as.thingsRM.Get(ctx, thingID); err != nil {
+	if _, err := as.clientsRM.Get(ctx, clientID); err != nil {
 		return ErrNotFoundDev
 	}
 
-	c := fmt.Sprintf("%s:%s", chanID, thingID)
+	c := fmt.Sprintf("%s:%s", chanID, clientID)
 	return as.connectRM.Save(ctx, c, c)
 }
 
-func (as *adapterService) DisconnectThing(ctx context.Context, chanID, thingID string) error {
+func (as *adapterService) DisconnectClient(ctx context.Context, chanID, clientID string) error {
 	if _, err := as.channelsRM.Get(ctx, chanID); err != nil {
 		return ErrNotFoundApp
 	}
 
-	if _, err := as.thingsRM.Get(ctx, thingID); err != nil {
+	if _, err := as.clientsRM.Get(ctx, clientID); err != nil {
 		return ErrNotFoundDev
 	}
 
-	c := fmt.Sprintf("%s:%s", chanID, thingID)
+	c := fmt.Sprintf("%s:%s", chanID, clientID)
 	return as.connectRM.Remove(ctx, c)
 }

@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	keyspace    = "magistrala"
+	keyspace    = "supermq"
 	subtopic    = "subtopic"
 	msgsNum     = 100
 	limit       = 10

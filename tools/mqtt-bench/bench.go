@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	"github.com/pelletier/go-toml"
 )
 
@@ -22,7 +22,7 @@ func Benchmark(cfg Config) error {
 	if err := checkConnection(cfg.MQTT.Broker.URL, 1); err != nil {
 		return err
 	}
-	logger, err := mglog.New(os.Stdout, "debug")
+	logger, err := smqlog.New(os.Stdout, "debug")
 	if err != nil {
 		return err
 	}
@@ -48,9 +48,9 @@ func Benchmark(cfg Config) error {
 		return fmt.Errorf("error loading connections file: %s", err)
 	}
 
-	mg := magistrala{}
+	mg := supermq{}
 	if err := toml.Unmarshal(data, &mg); err != nil {
-		return fmt.Errorf("cannot load Magistrala connections config %s \nUse tools/provision to create file", cfg.Mg.ConnFile)
+		return fmt.Errorf("cannot load SupeMQ connections config %s \nUse tools/provision to create file", cfg.Mg.ConnFile)
 	}
 
 	resCh := make(chan *runResults)
@@ -66,15 +66,15 @@ func Benchmark(cfg Config) error {
 	// Publishers
 	for i := 0; i < cfg.Test.Pubs; i++ {
 		mgChan := mg.Channels[i%n]
-		mgThing := mg.Things[i%n]
+		mgClient := mg.Clients[i%n]
 
 		if cfg.MQTT.TLS.MTLS {
-			cert, err = tls.X509KeyPair([]byte(mgThing.MTLSCert), []byte(mgThing.MTLSKey))
+			cert, err = tls.X509KeyPair([]byte(mgClient.MTLSCert), []byte(mgClient.MTLSKey))
 			if err != nil {
 				return err
 			}
 		}
-		c, err := makeClient(i, cfg, mgChan, mgThing, startStamp, caByte, cert)
+		c, err := makeClient(i, cfg, mgChan, mgClient, startStamp, caByte, cert)
 		if err != nil {
 			return fmt.Errorf("unable to create message payload %s", err.Error())
 		}
@@ -160,12 +160,12 @@ func getBytePayload(size int, m message) (handler, error) {
 	return ret, nil
 }
 
-func makeClient(i int, cfg Config, mgChan mgChannel, mgThing mgThing, start time.Time, caCert []byte, clientCert tls.Certificate) (*Client, error) {
+func makeClient(i int, cfg Config, mgChan mgChannel, mgClient mgClient, start time.Time, caCert []byte, clientCert tls.Certificate) (*Client, error) {
 	c := &Client{
 		ID:         strconv.Itoa(i),
 		BrokerURL:  cfg.MQTT.Broker.URL,
-		BrokerUser: mgThing.ThingID,
-		BrokerPass: mgThing.ThingKey,
+		BrokerUser: mgClient.ClientID,
+		BrokerPass: mgClient.ClientKey,
 		MsgTopic:   fmt.Sprintf("channels/%s/messages/%d/test", mgChan.ChannelID, start.UnixNano()),
 		MsgSize:    cfg.MQTT.Message.Size,
 		MsgCount:   cfg.Test.Count,
