@@ -45,7 +45,8 @@ const (
 	clientsRMPrefix  = "client"
 	channelsRMPrefix = "channel"
 	connsRMPrefix    = "connection"
-	clientsStream    = "events.supermq.clients"
+	clientsStream    = "events.supermq.client.*"
+	channelsStream   = "events.supermq.channel.*"
 )
 
 type config struct {
@@ -148,6 +149,12 @@ func main() {
 		return
 	}
 
+	if err = subscribeToChannelsES(ctx, svc, cfg, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to channels event store: %s", err))
+		exitCode = 1
+		return
+	}
+
 	logger.Info("Subscribed to Event Store")
 
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(cfg.InstanceID), logger)
@@ -173,6 +180,7 @@ func main() {
 func connectToMQTTBroker(burl, user, password string, timeout time.Duration, logger *slog.Logger) (mqttpaho.Client, error) {
 	opts := mqttpaho.NewClientOptions()
 	opts.AddBroker(burl)
+	opts.SetClientID(svcName)
 	opts.SetUsername(user)
 	opts.SetPassword(password)
 	opts.SetOnConnectHandler(func(_ mqttpaho.Client) {
@@ -208,6 +216,20 @@ func subscribeToClientsES(ctx context.Context, svc lora.Service, cfg config, log
 
 	subConfig := events.SubscriberConfig{
 		Stream:   clientsStream,
+		Consumer: cfg.ESConsumerName,
+		Handler:  loraevents.NewEventHandler(svc),
+	}
+	return subscriber.Subscribe(ctx, subConfig)
+}
+
+func subscribeToChannelsES(ctx context.Context, svc lora.Service, cfg config, logger *slog.Logger) error {
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
+	if err != nil {
+		return err
+	}
+
+	subConfig := events.SubscriberConfig{
+		Stream:   channelsStream,
 		Consumer: cfg.ESConsumerName,
 		Handler:  loraevents.NewEventHandler(svc),
 	}
