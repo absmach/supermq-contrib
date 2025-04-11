@@ -13,6 +13,7 @@ import (
 
 	"github.com/absmach/senml"
 	"github.com/absmach/supermq"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
@@ -22,8 +23,6 @@ const publisher = "twins"
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
-//
-//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// AddTwin adds new twin related to user identified by the provided key.
 	AddTwin(ctx context.Context, token string, twin Twin, def Definition) (tw Twin, err error)
@@ -76,7 +75,7 @@ var crudOp = map[string]string{
 
 type twinservice struct {
 	publisher  messaging.Publisher
-	auth       supermq.AuthServiceClient
+	auth       smqauthn.Authentication
 	twins      TwinRepository
 	states     StateRepository
 	idProvider supermq.IDProvider
@@ -88,7 +87,7 @@ type twinservice struct {
 var _ Service = (*twinservice)(nil)
 
 // New instantiates the twins service implementation.
-func New(publisher messaging.Publisher, auth supermq.AuthServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp supermq.IDProvider, chann string, logger *slog.Logger) Service {
+func New(publisher messaging.Publisher, auth smqauthn.Authentication, twins TwinRepository, tcache TwinCache, sr StateRepository, idp supermq.IDProvider, chann string, logger *slog.Logger) Service {
 	return &twinservice{
 		publisher:  publisher,
 		auth:       auth,
@@ -105,7 +104,7 @@ func (ts *twinservice) AddTwin(ctx context.Context, token string, twin Twin, def
 	var id string
 	var b []byte
 	defer ts.publish(ctx, &id, &err, crudOp["createSucc"], crudOp["createFail"], &b)
-	res, err := ts.auth.Identify(ctx, &supermq.IdentityReq{Token: token})
+	res, err := ts.auth.Authenticate(ctx, token)
 	if err != nil {
 		return Twin{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -115,7 +114,7 @@ func (ts *twinservice) AddTwin(ctx context.Context, token string, twin Twin, def
 		return Twin{}, err
 	}
 
-	twin.Owner = res.GetId()
+	twin.Owner = res.UserID
 
 	t := time.Now()
 	twin.Created = t
@@ -148,7 +147,7 @@ func (ts *twinservice) UpdateTwin(ctx context.Context, token string, twin Twin, 
 	var id string
 	defer ts.publish(ctx, &id, &err, crudOp["updateSucc"], crudOp["updateFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &supermq.IdentityReq{Token: token})
+	_, err = ts.auth.Authenticate(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -198,7 +197,7 @@ func (ts *twinservice) ViewTwin(ctx context.Context, token, twinID string) (tw T
 	var b []byte
 	defer ts.publish(ctx, &twinID, &err, crudOp["getSucc"], crudOp["getFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &supermq.IdentityReq{Token: token})
+	_, err = ts.auth.Authenticate(ctx, token)
 	if err != nil {
 		return Twin{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -217,7 +216,7 @@ func (ts *twinservice) RemoveTwin(ctx context.Context, token, twinID string) (er
 	var b []byte
 	defer ts.publish(ctx, &twinID, &err, crudOp["removeSucc"], crudOp["removeFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &supermq.IdentityReq{Token: token})
+	_, err = ts.auth.Authenticate(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -230,16 +229,16 @@ func (ts *twinservice) RemoveTwin(ctx context.Context, token, twinID string) (er
 }
 
 func (ts *twinservice) ListTwins(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (Page, error) {
-	res, err := ts.auth.Identify(ctx, &supermq.IdentityReq{Token: token})
+	res, err := ts.auth.Authenticate(ctx, token)
 	if err != nil {
 		return Page{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	return ts.twins.RetrieveAll(ctx, res.GetId(), offset, limit, name, metadata)
+	return ts.twins.RetrieveAll(ctx, res.UserID, offset, limit, name, metadata)
 }
 
 func (ts *twinservice) ListStates(ctx context.Context, token string, offset, limit uint64, twinID string) (StatesPage, error) {
-	_, err := ts.auth.Identify(ctx, &supermq.IdentityReq{Token: token})
+	_, err := ts.auth.Authenticate(ctx, token)
 	if err != nil {
 		return StatesPage{}, svcerr.ErrAuthentication
 	}

@@ -8,9 +8,8 @@ import (
 	"fmt"
 
 	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/authn"
-
 	"github.com/absmach/supermq/consumers"
+	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
@@ -22,8 +21,6 @@ var ErrMessage = errors.New("failed to convert to SuperMQ message")
 var _ consumers.AsyncConsumer = (*notifierService)(nil)
 
 // Service reprents a notification service.
-//
-//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// CreateSubscription persists a subscription.
 	// Successful operation is indicated by non-nil error response.

@@ -13,12 +13,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/supermq"
 	"github.com/absmach/supermq-contrib/pkg/testsutil"
 	"github.com/absmach/supermq-contrib/twins"
 	httpapi "github.com/absmach/supermq-contrib/twins/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -114,115 +114,115 @@ func TestAddTwin(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
-		desc        string
-		req         string
-		contentType string
-		auth        string
-		status      int
-		location    string
-		err         error
-		saveErr     error
-		identifyErr error
-		userID      string
+		desc            string
+		req             string
+		contentType     string
+		auth            string
+		status          int
+		location        string
+		err             error
+		saveErr         error
+		authenticateErr error
+		userID          string
 	}{
 		{
-			desc:        "add valid twin",
-			req:         data,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusCreated,
-			location:    "/twins/123e4567-e89b-12d3-a456-000000000001",
-			err:         nil,
-			saveErr:     nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "add valid twin",
+			req:             data,
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusCreated,
+			location:        "/twins/123e4567-e89b-12d3-a456-000000000001",
+			err:             nil,
+			saveErr:         nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "add twin with empty JSON request",
-			req:         "{}",
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusCreated,
-			location:    "/twins/123e4567-e89b-12d3-a456-000000000002",
-			err:         nil,
-			saveErr:     nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "add twin with empty JSON request",
+			req:             "{}",
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusCreated,
+			location:        "/twins/123e4567-e89b-12d3-a456-000000000002",
+			err:             nil,
+			saveErr:         nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "add twin with invalid auth token",
-			req:         data,
-			contentType: contentType,
-			auth:        invalidtoken,
-			status:      http.StatusUnauthorized,
-			location:    "",
-			err:         svcerr.ErrAuthentication,
-			saveErr:     svcerr.ErrCreateEntity,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "add twin with invalid auth token",
+			req:             data,
+			contentType:     contentType,
+			auth:            invalidtoken,
+			status:          http.StatusUnauthorized,
+			location:        "",
+			err:             svcerr.ErrAuthentication,
+			saveErr:         svcerr.ErrCreateEntity,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "add twin with empty auth token",
-			req:         data,
-			contentType: contentType,
-			auth:        "",
-			status:      http.StatusUnauthorized,
-			location:    "",
-			err:         svcerr.ErrAuthentication,
-			saveErr:     svcerr.ErrCreateEntity,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "add twin with empty auth token",
+			req:             data,
+			contentType:     contentType,
+			auth:            "",
+			status:          http.StatusUnauthorized,
+			location:        "",
+			err:             svcerr.ErrAuthentication,
+			saveErr:         svcerr.ErrCreateEntity,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "add twin with invalid request format",
-			req:         "}",
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-			location:    "",
-			err:         svcerr.ErrMalformedEntity,
-			saveErr:     svcerr.ErrCreateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "add twin with invalid request format",
+			req:             "}",
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusBadRequest,
+			location:        "",
+			err:             svcerr.ErrMalformedEntity,
+			saveErr:         svcerr.ErrCreateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "add twin with empty request",
-			req:         "",
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-			location:    "",
-			err:         svcerr.ErrMalformedEntity,
-			saveErr:     svcerr.ErrCreateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "add twin with empty request",
+			req:             "",
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusBadRequest,
+			location:        "",
+			err:             svcerr.ErrMalformedEntity,
+			saveErr:         svcerr.ErrCreateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "add twin without content type",
-			req:         data,
-			contentType: "",
-			auth:        token,
-			status:      http.StatusUnsupportedMediaType,
-			location:    "",
-			err:         apiutil.ErrUnsupportedContentType,
-			saveErr:     svcerr.ErrCreateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "add twin without content type",
+			req:             data,
+			contentType:     "",
+			auth:            token,
+			status:          http.StatusUnsupportedMediaType,
+			location:        "",
+			err:             apiutil.ErrUnsupportedContentType,
+			saveErr:         svcerr.ErrCreateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "add twin with invalid name",
-			req:         invalidData,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-			location:    "",
-			err:         svcerr.ErrMalformedEntity,
-			saveErr:     svcerr.ErrCreateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "add twin with invalid name",
+			req:             invalidData,
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusBadRequest,
+			location:        "",
+			err:             svcerr.ErrMalformedEntity,
+			saveErr:         svcerr.ErrCreateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &supermq.IdentityReq{Token: tc.auth}).Return(&supermq.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall := twinRepo.On("Save", mock.Anything, mock.Anything).Return(retained, tc.saveErr)
 		cacheCall := twinCache.On("Save", mock.Anything, mock.Anything).Return(tc.err)
 		req := testRequest{
@@ -264,134 +264,134 @@ func TestUpdateTwin(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
-		desc        string
-		req         string
-		id          string
-		contentType string
-		auth        string
-		status      int
-		err         error
-		retrieveErr error
-		updateErr   error
-		identifyErr error
-		userID      string
+		desc            string
+		req             string
+		id              string
+		contentType     string
+		auth            string
+		status          int
+		err             error
+		retrieveErr     error
+		updateErr       error
+		authenticateErr error
+		userID          string
 	}{
 		{
-			desc:        "update existing twin",
-			req:         data,
-			id:          twin.ID,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusOK,
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "update existing twin",
+			req:             data,
+			id:              twin.ID,
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusOK,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "update twin with empty JSON request",
-			req:         "{}",
-			id:          twin.ID,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-			retrieveErr: nil,
-			updateErr:   svcerr.ErrUpdateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "update twin with empty JSON request",
+			req:             "{}",
+			id:              twin.ID,
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusBadRequest,
+			err:             svcerr.ErrMalformedEntity,
+			retrieveErr:     nil,
+			updateErr:       svcerr.ErrUpdateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "update non-existent twin",
-			req:         data,
-			id:          strconv.FormatUint(wrongID, 10),
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusNotFound,
-			err:         svcerr.ErrNotFound,
-			retrieveErr: svcerr.ErrNotFound,
-			updateErr:   svcerr.ErrUpdateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "update non-existent twin",
+			req:             data,
+			id:              strconv.FormatUint(wrongID, 10),
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusNotFound,
+			err:             svcerr.ErrNotFound,
+			retrieveErr:     svcerr.ErrNotFound,
+			updateErr:       svcerr.ErrUpdateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "update twin with invalid token",
-			req:         data,
-			id:          twin.ID,
-			contentType: contentType,
-			auth:        invalidtoken,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
-			retrieveErr: svcerr.ErrNotFound,
-			updateErr:   svcerr.ErrUpdateEntity,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "update twin with invalid token",
+			req:             data,
+			id:              twin.ID,
+			contentType:     contentType,
+			auth:            invalidtoken,
+			status:          http.StatusUnauthorized,
+			err:             svcerr.ErrAuthentication,
+			retrieveErr:     svcerr.ErrNotFound,
+			updateErr:       svcerr.ErrUpdateEntity,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "update twin with empty token",
-			req:         data,
-			id:          twin.ID,
-			contentType: contentType,
-			auth:        "",
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
-			retrieveErr: svcerr.ErrNotFound,
-			updateErr:   svcerr.ErrUpdateEntity,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "update twin with empty token",
+			req:             data,
+			id:              twin.ID,
+			contentType:     contentType,
+			auth:            "",
+			status:          http.StatusUnauthorized,
+			err:             svcerr.ErrAuthentication,
+			retrieveErr:     svcerr.ErrNotFound,
+			updateErr:       svcerr.ErrUpdateEntity,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "update twin with invalid data format",
-			req:         "{",
-			id:          twin.ID,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			retrieveErr: nil,
-			updateErr:   svcerr.ErrUpdateEntity,
-			userID:      validID,
+			desc:            "update twin with invalid data format",
+			req:             "{",
+			id:              twin.ID,
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusBadRequest,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			retrieveErr:     nil,
+			updateErr:       svcerr.ErrUpdateEntity,
+			userID:          validID,
 		},
 		{
-			desc:        "update twin with empty request",
-			req:         "",
-			id:          twin.ID,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-			retrieveErr: nil,
-			updateErr:   svcerr.ErrUpdateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "update twin with empty request",
+			req:             "",
+			id:              twin.ID,
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusBadRequest,
+			err:             svcerr.ErrMalformedEntity,
+			retrieveErr:     nil,
+			updateErr:       svcerr.ErrUpdateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "update twin without content type",
-			req:         data,
-			id:          twin.ID,
-			contentType: "",
-			auth:        token,
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
-			retrieveErr: nil,
-			updateErr:   svcerr.ErrUpdateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "update twin without content type",
+			req:             data,
+			id:              twin.ID,
+			contentType:     "",
+			auth:            token,
+			status:          http.StatusUnsupportedMediaType,
+			err:             apiutil.ErrUnsupportedContentType,
+			retrieveErr:     nil,
+			updateErr:       svcerr.ErrUpdateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "update twin with invalid name",
-			req:         invalidData,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusMethodNotAllowed,
-			err:         svcerr.ErrMalformedEntity,
-			retrieveErr: svcerr.ErrNotFound,
-			updateErr:   svcerr.ErrUpdateEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "update twin with invalid name",
+			req:             invalidData,
+			contentType:     contentType,
+			auth:            token,
+			status:          http.StatusMethodNotAllowed,
+			err:             svcerr.ErrMalformedEntity,
+			retrieveErr:     svcerr.ErrNotFound,
+			updateErr:       svcerr.ErrUpdateEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &supermq.IdentityReq{Token: tc.auth}).Return(&supermq.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall := twinRepo.On("RetrieveByID", mock.Anything, tc.id).Return(twins.Twin{}, tc.retrieveErr)
 		repoCall1 := twinRepo.On("Update", mock.Anything, mock.Anything).Return(tc.updateErr)
 		cacheCall := twinCache.On("Update", mock.Anything, mock.Anything).Return(tc.err)
@@ -434,59 +434,59 @@ func TestViewTwin(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc        string
-		id          string
-		auth        string
-		status      int
-		res         twinRes
-		err         error
-		twin        twins.Twin
-		identifyErr error
-		userID      string
+		desc            string
+		id              string
+		auth            string
+		status          int
+		res             twinRes
+		err             error
+		twin            twins.Twin
+		authenticateErr error
+		userID          string
 	}{
 		{
-			desc:        "view existing twin",
-			id:          twin.ID,
-			auth:        token,
-			status:      http.StatusOK,
-			res:         twres,
-			err:         nil,
-			twin:        twin,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "view existing twin",
+			id:              twin.ID,
+			auth:            token,
+			status:          http.StatusOK,
+			res:             twres,
+			err:             nil,
+			twin:            twin,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "view non-existent twin",
-			id:          strconv.FormatUint(wrongID, 10),
-			auth:        token,
-			status:      http.StatusNotFound,
-			res:         twinRes{},
-			err:         svcerr.ErrNotFound,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "view non-existent twin",
+			id:              strconv.FormatUint(wrongID, 10),
+			auth:            token,
+			status:          http.StatusNotFound,
+			res:             twinRes{},
+			err:             svcerr.ErrNotFound,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "view twin by passing invalid token",
-			id:          twin.ID,
-			auth:        invalidtoken,
-			status:      http.StatusForbidden,
-			res:         twinRes{},
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "view twin by passing invalid token",
+			id:              twin.ID,
+			auth:            invalidtoken,
+			status:          http.StatusForbidden,
+			res:             twinRes{},
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "view twin by passing empty token",
-			id:          twin.ID,
-			auth:        "",
-			status:      http.StatusUnauthorized,
-			res:         twinRes{},
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "view twin by passing empty token",
+			id:              twin.ID,
+			auth:            "",
+			status:          http.StatusUnauthorized,
+			res:             twinRes{},
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &supermq.IdentityReq{Token: tc.auth}).Return(&supermq.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall := twinRepo.On("RetrieveByID", mock.Anything, tc.id).Return(tc.twin, tc.err)
 		req := testRequest{
 			client: ts.Client(),
@@ -535,15 +535,15 @@ func TestListTwins(t *testing.T) {
 	baseURL := fmt.Sprintf("%s/twins", ts.URL)
 	queryFmt := "%s?offset=%d&limit=%d"
 	cases := []struct {
-		desc        string
-		auth        string
-		status      int
-		url         string
-		res         []twinRes
-		err         error
-		page        twins.Page
-		identifyErr error
-		userID      string
+		desc            string
+		auth            string
+		status          int
+		url             string
+		res             []twinRes
+		err             error
+		page            twins.Page
+		authenticateErr error
+		userID          string
 	}{
 		{
 			desc:   "get a list of twins",
@@ -555,26 +555,26 @@ func TestListTwins(t *testing.T) {
 			page: twins.Page{
 				Twins: convTwin(data[0:10]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with invalid token",
-			auth:        invalidtoken,
-			status:      http.StatusUnauthorized,
-			url:         fmt.Sprintf(queryFmt, baseURL, 0, 1),
-			res:         nil,
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "get a list of twins with invalid token",
+			auth:            invalidtoken,
+			status:          http.StatusUnauthorized,
+			url:             fmt.Sprintf(queryFmt, baseURL, 0, 1),
+			res:             nil,
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "get a list of twins with empty token",
-			auth:        "",
-			status:      http.StatusUnauthorized,
-			url:         fmt.Sprintf(queryFmt, baseURL, 0, 1),
-			res:         nil,
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "get a list of twins with empty token",
+			auth:            "",
+			status:          http.StatusUnauthorized,
+			url:             fmt.Sprintf(queryFmt, baseURL, 0, 1),
+			res:             nil,
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "get a list of twins with valid offset and limit",
@@ -586,8 +586,8 @@ func TestListTwins(t *testing.T) {
 			page: twins.Page{
 				Twins: convTwin(data[25:65]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of twins with offset + limit > total",
@@ -599,68 +599,68 @@ func TestListTwins(t *testing.T) {
 			page: twins.Page{
 				Twins: convTwin(data[91:]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with negative offset",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf(queryFmt, baseURL, -1, 5),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins with negative offset",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf(queryFmt, baseURL, -1, 5),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with negative limit",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf(queryFmt, baseURL, 1, -5),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins with negative limit",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf(queryFmt, baseURL, 1, -5),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with zero limit",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf(queryFmt, baseURL, 1, 0),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins with zero limit",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf(queryFmt, baseURL, 1, 0),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with limit greater than max",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s?offset=%d&limit=%d", baseURL, 0, 110),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins with limit greater than max",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s?offset=%d&limit=%d", baseURL, 0, 110),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with invalid offset",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s%s", baseURL, "?offset=e&limit=5"),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins with invalid offset",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s%s", baseURL, "?offset=e&limit=5"),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with invalid limit",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s%s", baseURL, "?offset=5&limit=e"),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins with invalid limit",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s%s", baseURL, "?offset=5&limit=e"),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of twins without offset",
@@ -672,8 +672,8 @@ func TestListTwins(t *testing.T) {
 			page: twins.Page{
 				Twins: convTwin(data[0:5]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of twins without limit",
@@ -685,18 +685,18 @@ func TestListTwins(t *testing.T) {
 			page: twins.Page{
 				Twins: convTwin(data[1:11]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins with invalid number of parameters",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s%s", baseURL, "?offset=4&limit=4&limit=5&offset=5"),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins with invalid number of parameters",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s%s", baseURL, "?offset=4&limit=4&limit=5&offset=5"),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of twins with redundant query parameters",
@@ -708,18 +708,18 @@ func TestListTwins(t *testing.T) {
 			page: twins.Page{
 				Twins: convTwin(data[0:5]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of twins filtering with invalid name",
-			auth:        token,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", baseURL, 0, 5, invalidName),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of twins filtering with invalid name",
+			auth:            token,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", baseURL, 0, 5, invalidName),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of twins filtering with valid name",
@@ -731,13 +731,13 @@ func TestListTwins(t *testing.T) {
 			page: twins.Page{
 				Twins: convTwin(data[2:3]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &supermq.IdentityReq{Token: tc.auth}).Return(&supermq.IdentityRes{Id: tc.userID}, nil)
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(smqauthn.Session{UserID: tc.userID}, nil)
 		repoCall := twinRepo.On("RetrieveAll", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.err)
 		req := testRequest{
 			client: ts.Client(),
@@ -771,67 +771,67 @@ func TestRemoveTwin(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc        string
-		id          string
-		auth        string
-		status      int
-		err         error
-		removeErr   error
-		identifyErr error
-		userID      string
+		desc            string
+		id              string
+		auth            string
+		status          int
+		err             error
+		removeErr       error
+		authenticateErr error
+		userID          string
 	}{
 		{
-			desc:        "delete existing twin",
-			id:          twin.ID,
-			auth:        token,
-			status:      http.StatusNoContent,
-			err:         nil,
-			removeErr:   nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "delete existing twin",
+			id:              twin.ID,
+			auth:            token,
+			status:          http.StatusNoContent,
+			err:             nil,
+			removeErr:       nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "delete non-existent twin",
-			id:          strconv.FormatUint(wrongID, 10),
-			auth:        token,
-			status:      http.StatusNoContent,
-			err:         nil,
-			removeErr:   nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "delete non-existent twin",
+			id:              strconv.FormatUint(wrongID, 10),
+			auth:            token,
+			status:          http.StatusNoContent,
+			err:             nil,
+			removeErr:       nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "delete twin by passing empty id",
-			id:          "",
-			auth:        token,
-			status:      http.StatusMethodNotAllowed,
-			err:         svcerr.ErrMalformedEntity,
-			removeErr:   svcerr.ErrRemoveEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "delete twin by passing empty id",
+			id:              "",
+			auth:            token,
+			status:          http.StatusMethodNotAllowed,
+			err:             svcerr.ErrMalformedEntity,
+			removeErr:       svcerr.ErrRemoveEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "delete twin with invalid token",
-			id:          twin.ID,
-			auth:        invalidtoken,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
-			removeErr:   svcerr.ErrRemoveEntity,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "delete twin with invalid token",
+			id:              twin.ID,
+			auth:            invalidtoken,
+			status:          http.StatusUnauthorized,
+			err:             svcerr.ErrAuthentication,
+			removeErr:       svcerr.ErrRemoveEntity,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "delete twin with empty token",
-			id:          twin.ID,
-			auth:        "",
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
-			removeErr:   svcerr.ErrRemoveEntity,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "delete twin with empty token",
+			id:              twin.ID,
+			auth:            "",
+			status:          http.StatusUnauthorized,
+			err:             svcerr.ErrAuthentication,
+			removeErr:       svcerr.ErrRemoveEntity,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &supermq.IdentityReq{Token: tc.auth}).Return(&supermq.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall := twinRepo.On("Remove", mock.Anything, tc.id).Return(tc.removeErr)
 		cacheCall2 := twinCache.On("Remove", mock.Anything, tc.id).Return(tc.err)
 		req := testRequest{

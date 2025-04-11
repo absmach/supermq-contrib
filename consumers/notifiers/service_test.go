@@ -46,6 +46,7 @@ func TestCreateSubscription(t *testing.T) {
 	cases := []struct {
 		desc            string
 		token           string
+		session         smqauthn.Session
 		sub             notifiers.Subscription
 		id              string
 		err             error
@@ -81,9 +82,12 @@ func TestCreateSubscription(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		if tc.token == exampleUser1 {
+			tc.session = smqauthn.Session{UserID: tc.userID}
+		}
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(tc.session, tc.authenticateErr)
 		repoCall1 := repo.On("Save", context.Background(), mock.Anything).Return(tc.id, tc.err)
-		id, err := svc.CreateSubscription(context.Background(), tc.token, tc.sub)
+		id, err := svc.CreateSubscription(context.Background(), tc.session, tc.sub)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.id, id))
 		repoCall.Unset()
@@ -103,6 +107,7 @@ func TestViewSubscription(t *testing.T) {
 	cases := []struct {
 		desc            string
 		token           string
+		session         smqauthn.Session
 		id              string
 		sub             notifiers.Subscription
 		err             error
@@ -138,9 +143,12 @@ func TestViewSubscription(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		if tc.token == exampleUser1 {
+			tc.session = smqauthn.Session{UserID: tc.userID}
+		}
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(tc.session, tc.authenticateErr)
 		repoCall1 := repo.On("Retrieve", context.Background(), tc.id).Return(tc.sub, tc.err)
-		sub, err := svc.ViewSubscription(context.Background(), tc.token, tc.id)
+		sub, err := svc.ViewSubscription(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.sub, sub, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.sub, sub))
 		repoCall.Unset()
@@ -173,6 +181,7 @@ func TestListSubscriptions(t *testing.T) {
 	cases := []struct {
 		desc            string
 		token           string
+		session         smqauthn.Session
 		pageMeta        notifiers.PageMetadata
 		page            notifiers.Page
 		err             error
@@ -265,9 +274,12 @@ func TestListSubscriptions(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		if tc.token == exampleUser1 {
+			tc.session = smqauthn.Session{UserID: tc.userID}
+		}
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(tc.session, tc.authenticateErr)
 		repoCall1 := repo.On("RetrieveAll", context.Background(), tc.pageMeta).Return(tc.page, tc.err)
-		page, err := svc.ListSubscriptions(context.Background(), tc.token, tc.pageMeta)
+		page, err := svc.ListSubscriptions(context.Background(), tc.session, tc.pageMeta)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.page, page, fmt.Sprintf("%s: got unexpected page\n", tc.desc))
 		repoCall.Unset()
@@ -284,6 +296,7 @@ func TestRemoveSubscription(t *testing.T) {
 	cases := []struct {
 		desc            string
 		token           string
+		session         smqauthn.Session
 		id              string
 		err             error
 		authenticateErr error
@@ -315,9 +328,12 @@ func TestRemoveSubscription(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
+		if tc.token == exampleUser1 {
+			tc.session = smqauthn.Session{UserID: tc.userID}
+		}
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(tc.session, tc.authenticateErr)
 		repoCall1 := repo.On("Remove", context.Background(), tc.id).Return(tc.err)
-		err := svc.RemoveSubscription(context.Background(), tc.token, tc.id)
+		err := svc.RemoveSubscription(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()

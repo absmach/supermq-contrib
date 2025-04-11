@@ -23,7 +23,9 @@ import (
 	twmongodb "github.com/absmach/supermq-contrib/twins/mongodb"
 	"github.com/absmach/supermq-contrib/twins/tracing"
 	smqlog "github.com/absmach/supermq/logger"
-	auth "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/authn"
+	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
+	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/messaging/brokers"
@@ -121,23 +123,20 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	var authClient supermq.AuthServiceClient
-	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+	grpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
 		exitCode = 1
 		return
 	}
-
-	authServiceClient, authHandler, err := auth.Setup(ctx, authConfig)
+	authn, authnClient, err := authsvcAuthn.NewAuthentication(ctx, grpcCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer authHandler.Close()
-	authClient = authServiceClient
-	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
+	defer authnClient.Close()
+	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
 
 	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
@@ -148,7 +147,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	svc, err := newService(ctx, svcName, pubSub, cfg, authClient, tracer, db, cacheClient, logger)
+	svc, err := newService(ctx, svcName, pubSub, cfg, authn, tracer, db, cacheClient, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1
@@ -175,7 +174,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config, users supermq.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, logger *slog.Logger) (twins.Service, error) {
+func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config, authn authn.Authentication, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, logger *slog.Logger) (twins.Service, error) {
 	twinRepo := twmongodb.NewTwinRepository(db)
 	twinRepo = tracing.TwinRepositoryMiddleware(tracer, twinRepo)
 
@@ -186,7 +185,7 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config,
 	twinCache := events.NewTwinCache(cacheclient)
 	twinCache = tracing.TwinCacheMiddleware(tracer, twinCache)
 
-	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, idProvider, cfg.ChannelID, logger)
+	svc := twins.New(ps, authn, twinRepo, twinCache, stateRepo, idProvider, cfg.ChannelID, logger)
 
 	var err error
 	svc, err = events.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)
