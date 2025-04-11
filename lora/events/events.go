@@ -21,7 +21,7 @@ type removeChannelEvent struct {
 	id string
 }
 
-type connectionClientEvent struct {
-	chanID    string
+type connectionEvent struct {
+	chanIDs   []string
 	clientIDs []string
 }
