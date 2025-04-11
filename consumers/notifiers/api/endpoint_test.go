@@ -18,6 +18,8 @@ import (
 	"github.com/absmach/supermq-contrib/consumers/notifiers/mocks"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +43,7 @@ var (
 	notFoundRes   = toJSON(apiutil.ErrorRes{Msg: svcerr.ErrNotFound.Error()})
 	unauthRes     = toJSON(apiutil.ErrorRes{Msg: svcerr.ErrAuthentication.Error()})
 	invalidRes    = toJSON(apiutil.ErrorRes{Err: apiutil.ErrInvalidQueryParams.Error(), Msg: apiutil.ErrValidation.Error()})
-	missingTokRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerToken.Error(), Msg: apiutil.ErrValidation.Error()})
+	missingTokRes = toJSON(apiutil.ErrorRes{Msg: apiutil.ErrBearerToken.Error()})
 )
 
 type testRequest struct {
@@ -67,11 +69,12 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newServer() (*httptest.Server, *mocks.Service) {
+func newServer() (*httptest.Server, *authnmocks.Authentication, *mocks.Service) {
 	logger := smqlog.NewMock()
 	svc := new(mocks.Service)
-	mux := api.MakeHandler(svc, logger, instanceID)
-	return httptest.NewServer(mux), svc
+	authn := new(authnmocks.Authentication)
+	mux := api.MakeHandler(svc, authn, logger, instanceID)
+	return httptest.NewServer(mux), authn, svc
 }
 
 func toJSON(data interface{}) string {
@@ -83,7 +86,7 @@ func toJSON(data interface{}) string {
 }
 
 func TestCreate(t *testing.T) {
-	ss, svc := newServer()
+	ss, auth, svc := newServer()
 	defer ss.Close()
 
 	sub := notifiers.Subscription{
@@ -97,13 +100,15 @@ func TestCreate(t *testing.T) {
 	emptyContact := toJSON(notifiers.Subscription{Topic: "topic123"})
 
 	cases := []struct {
-		desc        string
-		req         string
-		contentType string
-		auth        string
-		status      int
-		location    string
-		err         error
+		desc            string
+		req             string
+		contentType     string
+		session         smqauthn.Session
+		auth            string
+		status          int
+		location        string
+		authenticateErr error
+		err             error
 	}{
 		{
 			desc:        "add successfully",
@@ -142,22 +147,24 @@ func TestCreate(t *testing.T) {
 			err:         svcerr.ErrMalformedEntity,
 		},
 		{
-			desc:        "add with invalid auth token",
-			req:         data,
-			contentType: contentType,
-			auth:        invalidToken,
-			status:      http.StatusUnauthorized,
-			location:    "",
-			err:         svcerr.ErrAuthentication,
+			desc:            "add with invalid auth token",
+			req:             data,
+			contentType:     contentType,
+			auth:            invalidToken,
+			status:          http.StatusUnauthorized,
+			location:        "",
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "add with empty auth token",
-			req:         data,
-			contentType: contentType,
-			auth:        "",
-			status:      http.StatusUnauthorized,
-			location:    "",
-			err:         svcerr.ErrAuthentication,
+			desc:            "add with empty auth token",
+			req:             data,
+			contentType:     contentType,
+			auth:            "",
+			status:          http.StatusUnauthorized,
+			location:        "",
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "add with invalid request format",
@@ -180,7 +187,11 @@ func TestCreate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("CreateSubscription", mock.Anything, tc.auth, sub).Return(path.Base(tc.location), tc.err)
+		if tc.auth == token {
+			tc.session = smqauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("CreateSubscription", mock.Anything, tc.session, sub).Return(path.Base(tc.location), tc.err)
 
 		req := testRequest{
 			client:      ss.Client(),
@@ -196,13 +207,13 @@ func TestCreate(t *testing.T) {
 		location := res.Header.Get("Location")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location %s got %s", tc.desc, tc.location, location))
-
+		authCall.Unset()
 		svcCall.Unset()
 	}
 }
 
 func TestView(t *testing.T) {
-	ss, svc := newServer()
+	ss, auth, svc := newServer()
 	defer ss.Close()
 
 	sub := notifiers.Subscription{
@@ -221,13 +232,15 @@ func TestView(t *testing.T) {
 	data := toJSON(sr)
 
 	cases := []struct {
-		desc   string
-		id     string
-		auth   string
-		status int
-		res    string
-		err    error
-		Sub    notifiers.Subscription
+		desc            string
+		id              string
+		session         smqauthn.Session
+		auth            string
+		status          int
+		res             string
+		authenticateErr error
+		err             error
+		Sub             notifiers.Subscription
 	}{
 		{
 			desc:   "view successfully",
@@ -247,12 +260,13 @@ func TestView(t *testing.T) {
 			err:    svcerr.ErrNotFound,
 		},
 		{
-			desc:   "view with invalid auth token",
-			id:     sub.ID,
-			auth:   invalidToken,
-			status: http.StatusUnauthorized,
-			res:    unauthRes,
-			err:    svcerr.ErrAuthentication,
+			desc:            "view with invalid auth token",
+			id:              sub.ID,
+			auth:            invalidToken,
+			status:          http.StatusUnauthorized,
+			res:             unauthRes,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "view with empty auth token",
@@ -265,7 +279,11 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("ViewSubscription", mock.Anything, tc.auth, tc.id).Return(tc.Sub, tc.err)
+		if tc.auth == token {
+			tc.session = smqauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("ViewSubscription", mock.Anything, tc.session, tc.id).Return(tc.Sub, tc.err)
 
 		req := testRequest{
 			client: ss.Client(),
@@ -280,13 +298,13 @@ func TestView(t *testing.T) {
 		data := strings.Trim(string(body), "\n")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, data))
-
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestList(t *testing.T) {
-	ss, svc := newServer()
+	ss, auth, svc := newServer()
 	defer ss.Close()
 
 	const numSubs = 100
@@ -320,13 +338,15 @@ func TestList(t *testing.T) {
 	contactList := toJSON(page{Offset: 10, Limit: 10, Total: 50, Subscriptions: contact2Subs})
 
 	cases := []struct {
-		desc   string
-		query  map[string]string
-		auth   string
-		status int
-		res    string
-		err    error
-		page   notifiers.Page
+		desc            string
+		query           map[string]string
+		session         smqauthn.Session
+		auth            string
+		status          int
+		res             string
+		authenticateErr error
+		err             error
+		page            notifiers.Page
 	}{
 		{
 			desc: "list default limit",
@@ -405,11 +425,12 @@ func TestList(t *testing.T) {
 			err:    svcerr.ErrMalformedEntity,
 		},
 		{
-			desc:   "list with invalid auth token",
-			auth:   invalidToken,
-			status: http.StatusUnauthorized,
-			res:    unauthRes,
-			err:    svcerr.ErrAuthentication,
+			desc:            "list with invalid auth token",
+			auth:            invalidToken,
+			status:          http.StatusUnauthorized,
+			res:             unauthRes,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "list with empty auth token",
@@ -421,7 +442,11 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("ListSubscriptions", mock.Anything, tc.auth, mock.Anything).Return(tc.page, tc.err)
+		if tc.auth == token {
+			tc.session = smqauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("ListSubscriptions", mock.Anything, tc.session, mock.Anything).Return(tc.page, tc.err)
 		req := testRequest{
 			client: ss.Client(),
 			method: http.MethodGet,
@@ -435,23 +460,25 @@ func TestList(t *testing.T) {
 		data := strings.Trim(string(body), "\n")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: got unexpected body\n", tc.desc))
-
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestRemove(t *testing.T) {
-	ss, svc := newServer()
+	ss, auth, svc := newServer()
 	defer ss.Close()
 	id := generateUUID(t)
 
 	cases := []struct {
-		desc   string
-		id     string
-		auth   string
-		status int
-		res    string
-		err    error
+		desc            string
+		id              string
+		session         smqauthn.Session
+		auth            string
+		status          int
+		res             string
+		authenticateErr error
+		err             error
 	}{
 		{
 			desc:   "remove successfully",
@@ -493,7 +520,11 @@ func TestRemove(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("RemoveSubscription", mock.Anything, tc.auth, tc.id).Return(tc.err)
+		if tc.auth == token {
+			tc.session = smqauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.auth).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("RemoveSubscription", mock.Anything, tc.session, tc.id).Return(tc.err)
 
 		req := testRequest{
 			client: ss.Client(),
@@ -504,8 +535,8 @@ func TestRemove(t *testing.T) {
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 

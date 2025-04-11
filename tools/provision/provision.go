@@ -6,6 +6,7 @@ package provision
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -54,7 +55,7 @@ type Config struct {
 }
 
 // Provision - function that does actual provisiong.
-func Provision(conf Config) error {
+func Provision(ctx context.Context, conf Config) error {
 	const (
 		rsaBits = 4096
 		ttl     = "2400h"
@@ -86,14 +87,14 @@ func Provision(conf Config) error {
 	}
 
 	// Create new user
-	if _, err := s.CreateUser(user, ""); err != nil {
+	if _, err := s.CreateUser(ctx, user, ""); err != nil {
 		return fmt.Errorf("unable to create new user: %s", err.Error())
 	}
 
 	var err error
 
 	// Login user
-	token, err := s.CreateToken(sdk.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
+	token, err := s.CreateToken(ctx, sdk.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
 	if err != nil {
 		return fmt.Errorf("unable to login user: %s", err.Error())
 	}
@@ -102,16 +103,16 @@ func Provision(conf Config) error {
 	dname := fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate())
 	domain := sdk.Domain{
 		Name:       dname,
-		Alias:      strings.ToLower(dname),
+		Route:      strings.ToLower(dname),
 		Permission: "admin",
 	}
 
-	domain, err = s.CreateDomain(domain, token.AccessToken)
+	domain, err = s.CreateDomain(ctx, domain, token.AccessToken)
 	if err != nil {
 		return fmt.Errorf("unable to create domain: %w", err)
 	}
 	// Login to domain
-	token, err = s.CreateToken(sdk.Login{
+	token, err = s.CreateToken(ctx, sdk.Login{
 		Username: user.Credentials.Username,
 		Password: user.Credentials.Secret,
 	})
@@ -157,14 +158,14 @@ func Provision(conf Config) error {
 		channels[i] = sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
-	clients, err = s.CreateClients(clients, domain.ID, token.AccessToken)
+	clients, err = s.CreateClients(ctx, clients, domain.ID, token.AccessToken)
 	if err != nil {
 		return fmt.Errorf("failed to create the clients: %s", err.Error())
 	}
 
 	var chs []sdk.Channel
 	for _, c := range channels {
-		c, err = s.CreateChannel(c, domain.ID, token.AccessToken)
+		c, err = s.CreateChannel(ctx, c, domain.ID, token.AccessToken)
 		if err != nil {
 			return fmt.Errorf("failed to create the chennels: %s", err.Error())
 		}
@@ -260,7 +261,7 @@ func Provision(conf Config) error {
 				ChannelIDs: []string{cID},
 				Types:      []string{"publish", "subscribe"},
 			}
-			if err := s.Connect(conIDs, domain.ID, token.AccessToken); err != nil {
+			if err := s.Connect(ctx, conIDs, domain.ID, token.AccessToken); err != nil {
 				log.Fatalf("Failed to connect clients %s to channels %s: %s", tID, cID, err)
 			}
 		}
