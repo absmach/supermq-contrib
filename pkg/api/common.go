@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+
 	"github.com/absmach/supermq"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
@@ -117,7 +118,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, errors.ErrMalformedEntity),
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrMissingName),
-		errors.Contains(err, apiutil.ErrMissingAlias),
+		errors.Contains(err, apiutil.ErrMissingRoute),
 		errors.Contains(err, apiutil.ErrMissingEmail),
 		errors.Contains(err, apiutil.ErrMissingHost),
 		errors.Contains(err, apiutil.ErrInvalidResetPass),
@@ -141,7 +142,6 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvitationState),
 		errors.Contains(err, apiutil.ErrInvalidAPIKey),
 		errors.Contains(err, svcerr.ErrViewEntity),
-		errors.Contains(err, apiutil.ErrBootstrapState),
 		errors.Contains(err, apiutil.ErrMissingCertData),
 		errors.Contains(err, apiutil.ErrInvalidContact),
 		errors.Contains(err, apiutil.ErrInvalidTopic),
@@ -163,7 +163,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		err = unwrap(err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 
-	case errors.Contains(err, svcerr.ErrNotFound),
+	case errors.Contains(err, svcerr.ErrNotFound):
 		err = unwrap(err)
 		w.WriteHeader(http.StatusNotFound)
 

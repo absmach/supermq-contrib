@@ -13,7 +13,6 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/supermq"
-
 	mongoclient "github.com/absmach/supermq-contrib/pkg/clients/mongo"
 	"github.com/absmach/supermq-contrib/readers/api"
 	"github.com/absmach/supermq-contrib/readers/mongodb"
