@@ -73,15 +73,26 @@ type StateRepository_Count_Call struct {
 }
 
 // Count is a helper method to define mock.On call
-//   - ctx
-//   - twin
+//   - ctx context.Context
+//   - twin twins.Twin
 func (_e *StateRepository_Expecter) Count(ctx interface{}, twin interface{}) *StateRepository_Count_Call {
 	return &StateRepository_Count_Call{Call: _e.mock.On("Count", ctx, twin)}
 }
 
 func (_c *StateRepository_Count_Call) Run(run func(ctx context.Context, twin twins.Twin)) *StateRepository_Count_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(twins.Twin))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 twins.Twin
+		if args[1] != nil {
+			arg1 = args[1].(twins.Twin)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -128,17 +139,38 @@ type StateRepository_RetrieveAll_Call struct {
 }
 
 // RetrieveAll is a helper method to define mock.On call
-//   - ctx
-//   - offset
-//   - limit
-//   - twinID
+//   - ctx context.Context
+//   - offset uint64
+//   - limit uint64
+//   - twinID string
 func (_e *StateRepository_Expecter) RetrieveAll(ctx interface{}, offset interface{}, limit interface{}, twinID interface{}) *StateRepository_RetrieveAll_Call {
 	return &StateRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, offset, limit, twinID)}
 }
 
 func (_c *StateRepository_RetrieveAll_Call) Run(run func(ctx context.Context, offset uint64, limit uint64, twinID string)) *StateRepository_RetrieveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uint64), args[2].(uint64), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uint64
+		if args[1] != nil {
+			arg1 = args[1].(uint64)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -185,15 +217,26 @@ type StateRepository_RetrieveLast_Call struct {
 }
 
 // RetrieveLast is a helper method to define mock.On call
-//   - ctx
-//   - twinID
+//   - ctx context.Context
+//   - twinID string
 func (_e *StateRepository_Expecter) RetrieveLast(ctx interface{}, twinID interface{}) *StateRepository_RetrieveLast_Call {
 	return &StateRepository_RetrieveLast_Call{Call: _e.mock.On("RetrieveLast", ctx, twinID)}
 }
 
 func (_c *StateRepository_RetrieveLast_Call) Run(run func(ctx context.Context, twinID string)) *StateRepository_RetrieveLast_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -231,15 +274,26 @@ type StateRepository_Save_Call struct {
 }
 
 // Save is a helper method to define mock.On call
-//   - ctx
-//   - state
+//   - ctx context.Context
+//   - state twins.State
 func (_e *StateRepository_Expecter) Save(ctx interface{}, state interface{}) *StateRepository_Save_Call {
 	return &StateRepository_Save_Call{Call: _e.mock.On("Save", ctx, state)}
 }
 
 func (_c *StateRepository_Save_Call) Run(run func(ctx context.Context, state twins.State)) *StateRepository_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(twins.State))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 twins.State
+		if args[1] != nil {
+			arg1 = args[1].(twins.State)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -277,15 +331,26 @@ type StateRepository_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - ctx
-//   - state
+//   - ctx context.Context
+//   - state twins.State
 func (_e *StateRepository_Expecter) Update(ctx interface{}, state interface{}) *StateRepository_Update_Call {
 	return &StateRepository_Update_Call{Call: _e.mock.On("Update", ctx, state)}
 }
 
 func (_c *StateRepository_Update_Call) Run(run func(ctx context.Context, state twins.State)) *StateRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(twins.State))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 twins.State
+		if args[1] != nil {
+			arg1 = args[1].(twins.State)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

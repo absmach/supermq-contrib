@@ -75,16 +75,32 @@ type TwinCache_IDs_Call struct {
 }
 
 // IDs is a helper method to define mock.On call
-//   - ctx
-//   - channel
-//   - subtopic
+//   - ctx context.Context
+//   - channel string
+//   - subtopic string
 func (_e *TwinCache_Expecter) IDs(ctx interface{}, channel interface{}, subtopic interface{}) *TwinCache_IDs_Call {
 	return &TwinCache_IDs_Call{Call: _e.mock.On("IDs", ctx, channel, subtopic)}
 }
 
 func (_c *TwinCache_IDs_Call) Run(run func(ctx context.Context, channel string, subtopic string)) *TwinCache_IDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -122,15 +138,26 @@ type TwinCache_Remove_Call struct {
 }
 
 // Remove is a helper method to define mock.On call
-//   - ctx
-//   - twinID
+//   - ctx context.Context
+//   - twinID string
 func (_e *TwinCache_Expecter) Remove(ctx interface{}, twinID interface{}) *TwinCache_Remove_Call {
 	return &TwinCache_Remove_Call{Call: _e.mock.On("Remove", ctx, twinID)}
 }
 
 func (_c *TwinCache_Remove_Call) Run(run func(ctx context.Context, twinID string)) *TwinCache_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -168,15 +195,26 @@ type TwinCache_Save_Call struct {
 }
 
 // Save is a helper method to define mock.On call
-//   - ctx
-//   - twin
+//   - ctx context.Context
+//   - twin twins.Twin
 func (_e *TwinCache_Expecter) Save(ctx interface{}, twin interface{}) *TwinCache_Save_Call {
 	return &TwinCache_Save_Call{Call: _e.mock.On("Save", ctx, twin)}
 }
 
 func (_c *TwinCache_Save_Call) Run(run func(ctx context.Context, twin twins.Twin)) *TwinCache_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(twins.Twin))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 twins.Twin
+		if args[1] != nil {
+			arg1 = args[1].(twins.Twin)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -214,17 +252,38 @@ type TwinCache_SaveIDs_Call struct {
 }
 
 // SaveIDs is a helper method to define mock.On call
-//   - ctx
-//   - channel
-//   - subtopic
-//   - twinIDs
+//   - ctx context.Context
+//   - channel string
+//   - subtopic string
+//   - twinIDs []string
 func (_e *TwinCache_Expecter) SaveIDs(ctx interface{}, channel interface{}, subtopic interface{}, twinIDs interface{}) *TwinCache_SaveIDs_Call {
 	return &TwinCache_SaveIDs_Call{Call: _e.mock.On("SaveIDs", ctx, channel, subtopic, twinIDs)}
 }
 
 func (_c *TwinCache_SaveIDs_Call) Run(run func(ctx context.Context, channel string, subtopic string, twinIDs []string)) *TwinCache_SaveIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -262,15 +321,26 @@ type TwinCache_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - ctx
-//   - twin
+//   - ctx context.Context
+//   - twin twins.Twin
 func (_e *TwinCache_Expecter) Update(ctx interface{}, twin interface{}) *TwinCache_Update_Call {
 	return &TwinCache_Update_Call{Call: _e.mock.On("Update", ctx, twin)}
 }
 
 func (_c *TwinCache_Update_Call) Run(run func(ctx context.Context, twin twins.Twin)) *TwinCache_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(twins.Twin))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 twins.Twin
+		if args[1] != nil {
+			arg1 = args[1].(twins.Twin)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

@@ -74,17 +74,38 @@ type Service_AddTwin_Call struct {
 }
 
 // AddTwin is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - twin
-//   - def
+//   - ctx context.Context
+//   - token string
+//   - twin twins.Twin
+//   - def twins.Definition
 func (_e *Service_Expecter) AddTwin(ctx interface{}, token interface{}, twin interface{}, def interface{}) *Service_AddTwin_Call {
 	return &Service_AddTwin_Call{Call: _e.mock.On("AddTwin", ctx, token, twin, def)}
 }
 
 func (_c *Service_AddTwin_Call) Run(run func(ctx context.Context, token string, twin twins.Twin, def twins.Definition)) *Service_AddTwin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(twins.Twin), args[3].(twins.Definition))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 twins.Twin
+		if args[2] != nil {
+			arg2 = args[2].(twins.Twin)
+		}
+		var arg3 twins.Definition
+		if args[3] != nil {
+			arg3 = args[3].(twins.Definition)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -131,18 +152,44 @@ type Service_ListStates_Call struct {
 }
 
 // ListStates is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - offset
-//   - limit
-//   - twinID
+//   - ctx context.Context
+//   - token string
+//   - offset uint64
+//   - limit uint64
+//   - twinID string
 func (_e *Service_Expecter) ListStates(ctx interface{}, token interface{}, offset interface{}, limit interface{}, twinID interface{}) *Service_ListStates_Call {
 	return &Service_ListStates_Call{Call: _e.mock.On("ListStates", ctx, token, offset, limit, twinID)}
 }
 
 func (_c *Service_ListStates_Call) Run(run func(ctx context.Context, token string, offset uint64, limit uint64, twinID string)) *Service_ListStates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(uint64), args[3].(uint64), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -189,19 +236,50 @@ type Service_ListTwins_Call struct {
 }
 
 // ListTwins is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - offset
-//   - limit
-//   - name
-//   - metadata
+//   - ctx context.Context
+//   - token string
+//   - offset uint64
+//   - limit uint64
+//   - name string
+//   - metadata twins.Metadata
 func (_e *Service_Expecter) ListTwins(ctx interface{}, token interface{}, offset interface{}, limit interface{}, name interface{}, metadata interface{}) *Service_ListTwins_Call {
 	return &Service_ListTwins_Call{Call: _e.mock.On("ListTwins", ctx, token, offset, limit, name, metadata)}
 }
 
 func (_c *Service_ListTwins_Call) Run(run func(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata twins.Metadata)) *Service_ListTwins_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(uint64), args[3].(uint64), args[4].(string), args[5].(twins.Metadata))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 twins.Metadata
+		if args[5] != nil {
+			arg5 = args[5].(twins.Metadata)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -239,16 +317,32 @@ type Service_RemoveTwin_Call struct {
 }
 
 // RemoveTwin is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - twinID
+//   - ctx context.Context
+//   - token string
+//   - twinID string
 func (_e *Service_Expecter) RemoveTwin(ctx interface{}, token interface{}, twinID interface{}) *Service_RemoveTwin_Call {
 	return &Service_RemoveTwin_Call{Call: _e.mock.On("RemoveTwin", ctx, token, twinID)}
 }
 
 func (_c *Service_RemoveTwin_Call) Run(run func(ctx context.Context, token string, twinID string)) *Service_RemoveTwin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -286,15 +380,26 @@ type Service_SaveStates_Call struct {
 }
 
 // SaveStates is a helper method to define mock.On call
-//   - ctx
-//   - msg
+//   - ctx context.Context
+//   - msg *messaging.Message
 func (_e *Service_Expecter) SaveStates(ctx interface{}, msg interface{}) *Service_SaveStates_Call {
 	return &Service_SaveStates_Call{Call: _e.mock.On("SaveStates", ctx, msg)}
 }
 
 func (_c *Service_SaveStates_Call) Run(run func(ctx context.Context, msg *messaging.Message)) *Service_SaveStates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*messaging.Message))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *messaging.Message
+		if args[1] != nil {
+			arg1 = args[1].(*messaging.Message)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -332,17 +437,38 @@ type Service_UpdateTwin_Call struct {
 }
 
 // UpdateTwin is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - twin
-//   - def
+//   - ctx context.Context
+//   - token string
+//   - twin twins.Twin
+//   - def twins.Definition
 func (_e *Service_Expecter) UpdateTwin(ctx interface{}, token interface{}, twin interface{}, def interface{}) *Service_UpdateTwin_Call {
 	return &Service_UpdateTwin_Call{Call: _e.mock.On("UpdateTwin", ctx, token, twin, def)}
 }
 
 func (_c *Service_UpdateTwin_Call) Run(run func(ctx context.Context, token string, twin twins.Twin, def twins.Definition)) *Service_UpdateTwin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(twins.Twin), args[3].(twins.Definition))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 twins.Twin
+		if args[2] != nil {
+			arg2 = args[2].(twins.Twin)
+		}
+		var arg3 twins.Definition
+		if args[3] != nil {
+			arg3 = args[3].(twins.Definition)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -389,16 +515,32 @@ type Service_ViewTwin_Call struct {
 }
 
 // ViewTwin is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - twinID
+//   - ctx context.Context
+//   - token string
+//   - twinID string
 func (_e *Service_Expecter) ViewTwin(ctx interface{}, token interface{}, twinID interface{}) *Service_ViewTwin_Call {
 	return &Service_ViewTwin_Call{Call: _e.mock.On("ViewTwin", ctx, token, twinID)}
 }
 
 func (_c *Service_ViewTwin_Call) Run(run func(ctx context.Context, token string, twinID string)) *Service_ViewTwin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

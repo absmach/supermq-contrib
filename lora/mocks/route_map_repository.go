@@ -72,15 +72,26 @@ type RouteMapRepository_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//   - context1
-//   - s
+//   - context1 context.Context
+//   - s string
 func (_e *RouteMapRepository_Expecter) Get(context1 interface{}, s interface{}) *RouteMapRepository_Get_Call {
 	return &RouteMapRepository_Get_Call{Call: _e.mock.On("Get", context1, s)}
 }
 
 func (_c *RouteMapRepository_Get_Call) Run(run func(context1 context.Context, s string)) *RouteMapRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -118,15 +129,26 @@ type RouteMapRepository_Remove_Call struct {
 }
 
 // Remove is a helper method to define mock.On call
-//   - context1
-//   - s
+//   - context1 context.Context
+//   - s string
 func (_e *RouteMapRepository_Expecter) Remove(context1 interface{}, s interface{}) *RouteMapRepository_Remove_Call {
 	return &RouteMapRepository_Remove_Call{Call: _e.mock.On("Remove", context1, s)}
 }
 
 func (_c *RouteMapRepository_Remove_Call) Run(run func(context1 context.Context, s string)) *RouteMapRepository_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -164,16 +186,32 @@ type RouteMapRepository_Save_Call struct {
 }
 
 // Save is a helper method to define mock.On call
-//   - context1
-//   - s
-//   - s1
+//   - context1 context.Context
+//   - s string
+//   - s1 string
 func (_e *RouteMapRepository_Expecter) Save(context1 interface{}, s interface{}, s1 interface{}) *RouteMapRepository_Save_Call {
 	return &RouteMapRepository_Save_Call{Call: _e.mock.On("Save", context1, s, s1)}
 }
 
 func (_c *RouteMapRepository_Save_Call) Run(run func(context1 context.Context, s string, s1 string)) *RouteMapRepository_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

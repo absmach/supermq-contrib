@@ -22,7 +22,6 @@ import (
 	email "github.com/absmach/supermq-contrib/pkg/email"
 	"github.com/absmach/supermq/consumers"
 	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
@@ -153,7 +152,7 @@ func main() {
 	defer authnHandler.Close()
 	logger.Info("authn successfully connected to auth gRPC server " + authnHandler.Secure())
 
-	svc, err := newService(db, authn, tracer, cfg, ec, logger)
+	svc, err := newService(db, tracer, cfg, ec, logger)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -166,7 +165,7 @@ func main() {
 		return
 	}
 
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, authn, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, supermq.Version, logger, cancel)
@@ -186,7 +185,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, authClient authn.Authentication, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (notifiers.Service, error) {
+func newService(db *sqlx.DB, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (notifiers.Service, error) {
 	database := notifierpg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierpg.New(database))
 	idp := ulid.New()
@@ -197,7 +196,7 @@ func newService(db *sqlx.DB, authClient authn.Authentication, tracer trace.Trace
 	}
 
 	notifier := smtp.New(agent)
-	svc := notifiers.New(authClient, repo, idp, notifier, c.From)
+	svc := notifiers.New(repo, idp, notifier, c.From)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("notifier", "smtp")
 	svc = api.MetricsMiddleware(svc, counter, latency)

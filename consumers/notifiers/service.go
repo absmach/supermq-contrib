@@ -49,7 +49,7 @@ type notifierService struct {
 }
 
 // New instantiates the subscriptions service implementation.
-func New(auth authn.Authentication, subs SubscriptionsRepository, idp supermq.IDProvider, notifier consumers.Notifier, from string) Service {
+func New(subs SubscriptionsRepository, idp supermq.IDProvider, notifier consumers.Notifier, from string) Service {
 	return &notifierService{
 		subs:     subs,
 		idp:      idp,

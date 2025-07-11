@@ -65,15 +65,26 @@ type Service_ConsumeBlocking_Call struct {
 }
 
 // ConsumeBlocking is a helper method to define mock.On call
-//   - ctx
-//   - messages
+//   - ctx context.Context
+//   - messages interface{}
 func (_e *Service_Expecter) ConsumeBlocking(ctx interface{}, messages interface{}) *Service_ConsumeBlocking_Call {
 	return &Service_ConsumeBlocking_Call{Call: _e.mock.On("ConsumeBlocking", ctx, messages)}
 }
 
 func (_c *Service_ConsumeBlocking_Call) Run(run func(ctx context.Context, messages interface{})) *Service_ConsumeBlocking_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 interface{}
+		if args[1] != nil {
+			arg1 = args[1].(interface{})
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -120,16 +131,32 @@ type Service_CreateSubscription_Call struct {
 }
 
 // CreateSubscription is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - sub
+//   - ctx context.Context
+//   - session authn.Session
+//   - sub notifiers.Subscription
 func (_e *Service_Expecter) CreateSubscription(ctx interface{}, session interface{}, sub interface{}) *Service_CreateSubscription_Call {
 	return &Service_CreateSubscription_Call{Call: _e.mock.On("CreateSubscription", ctx, session, sub)}
 }
 
 func (_c *Service_CreateSubscription_Call) Run(run func(ctx context.Context, session authn.Session, sub notifiers.Subscription)) *Service_CreateSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(notifiers.Subscription))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 notifiers.Subscription
+		if args[2] != nil {
+			arg2 = args[2].(notifiers.Subscription)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -176,16 +203,32 @@ type Service_ListSubscriptions_Call struct {
 }
 
 // ListSubscriptions is a helper method to define mock.On call
-//   - ctx
-//   - sesssion
-//   - pm
+//   - ctx context.Context
+//   - sesssion authn.Session
+//   - pm notifiers.PageMetadata
 func (_e *Service_Expecter) ListSubscriptions(ctx interface{}, sesssion interface{}, pm interface{}) *Service_ListSubscriptions_Call {
 	return &Service_ListSubscriptions_Call{Call: _e.mock.On("ListSubscriptions", ctx, sesssion, pm)}
 }
 
 func (_c *Service_ListSubscriptions_Call) Run(run func(ctx context.Context, sesssion authn.Session, pm notifiers.PageMetadata)) *Service_ListSubscriptions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(notifiers.PageMetadata))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 notifiers.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(notifiers.PageMetadata)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -223,16 +266,32 @@ type Service_RemoveSubscription_Call struct {
 }
 
 // RemoveSubscription is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) RemoveSubscription(ctx interface{}, session interface{}, id interface{}) *Service_RemoveSubscription_Call {
 	return &Service_RemoveSubscription_Call{Call: _e.mock.On("RemoveSubscription", ctx, session, id)}
 }
 
 func (_c *Service_RemoveSubscription_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_RemoveSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -279,16 +338,32 @@ type Service_ViewSubscription_Call struct {
 }
 
 // ViewSubscription is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) ViewSubscription(ctx interface{}, session interface{}, id interface{}) *Service_ViewSubscription_Call {
 	return &Service_ViewSubscription_Call{Call: _e.mock.On("ViewSubscription", ctx, session, id)}
 }
 
 func (_c *Service_ViewSubscription_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_ViewSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

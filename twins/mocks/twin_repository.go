@@ -64,15 +64,26 @@ type TwinRepository_Remove_Call struct {
 }
 
 // Remove is a helper method to define mock.On call
-//   - ctx
-//   - twinID
+//   - ctx context.Context
+//   - twinID string
 func (_e *TwinRepository_Expecter) Remove(ctx interface{}, twinID interface{}) *TwinRepository_Remove_Call {
 	return &TwinRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, twinID)}
 }
 
 func (_c *TwinRepository_Remove_Call) Run(run func(ctx context.Context, twinID string)) *TwinRepository_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -119,19 +130,50 @@ type TwinRepository_RetrieveAll_Call struct {
 }
 
 // RetrieveAll is a helper method to define mock.On call
-//   - ctx
-//   - owner
-//   - offset
-//   - limit
-//   - name
-//   - metadata
+//   - ctx context.Context
+//   - owner string
+//   - offset uint64
+//   - limit uint64
+//   - name string
+//   - metadata twins.Metadata
 func (_e *TwinRepository_Expecter) RetrieveAll(ctx interface{}, owner interface{}, offset interface{}, limit interface{}, name interface{}, metadata interface{}) *TwinRepository_RetrieveAll_Call {
 	return &TwinRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, owner, offset, limit, name, metadata)}
 }
 
 func (_c *TwinRepository_RetrieveAll_Call) Run(run func(ctx context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata)) *TwinRepository_RetrieveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(uint64), args[3].(uint64), args[4].(string), args[5].(twins.Metadata))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 twins.Metadata
+		if args[5] != nil {
+			arg5 = args[5].(twins.Metadata)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -180,16 +222,32 @@ type TwinRepository_RetrieveByAttribute_Call struct {
 }
 
 // RetrieveByAttribute is a helper method to define mock.On call
-//   - ctx
-//   - channel
-//   - subtopic
+//   - ctx context.Context
+//   - channel string
+//   - subtopic string
 func (_e *TwinRepository_Expecter) RetrieveByAttribute(ctx interface{}, channel interface{}, subtopic interface{}) *TwinRepository_RetrieveByAttribute_Call {
 	return &TwinRepository_RetrieveByAttribute_Call{Call: _e.mock.On("RetrieveByAttribute", ctx, channel, subtopic)}
 }
 
 func (_c *TwinRepository_RetrieveByAttribute_Call) Run(run func(ctx context.Context, channel string, subtopic string)) *TwinRepository_RetrieveByAttribute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -236,15 +294,26 @@ type TwinRepository_RetrieveByID_Call struct {
 }
 
 // RetrieveByID is a helper method to define mock.On call
-//   - ctx
-//   - twinID
+//   - ctx context.Context
+//   - twinID string
 func (_e *TwinRepository_Expecter) RetrieveByID(ctx interface{}, twinID interface{}) *TwinRepository_RetrieveByID_Call {
 	return &TwinRepository_RetrieveByID_Call{Call: _e.mock.On("RetrieveByID", ctx, twinID)}
 }
 
 func (_c *TwinRepository_RetrieveByID_Call) Run(run func(ctx context.Context, twinID string)) *TwinRepository_RetrieveByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -291,15 +360,26 @@ type TwinRepository_Save_Call struct {
 }
 
 // Save is a helper method to define mock.On call
-//   - ctx
-//   - twin
+//   - ctx context.Context
+//   - twin twins.Twin
 func (_e *TwinRepository_Expecter) Save(ctx interface{}, twin interface{}) *TwinRepository_Save_Call {
 	return &TwinRepository_Save_Call{Call: _e.mock.On("Save", ctx, twin)}
 }
 
 func (_c *TwinRepository_Save_Call) Run(run func(ctx context.Context, twin twins.Twin)) *TwinRepository_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(twins.Twin))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 twins.Twin
+		if args[1] != nil {
+			arg1 = args[1].(twins.Twin)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -337,15 +417,26 @@ type TwinRepository_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - ctx
-//   - twin
+//   - ctx context.Context
+//   - twin twins.Twin
 func (_e *TwinRepository_Expecter) Update(ctx interface{}, twin interface{}) *TwinRepository_Update_Call {
 	return &TwinRepository_Update_Call{Call: _e.mock.On("Update", ctx, twin)}
 }
 
 func (_c *TwinRepository_Update_Call) Run(run func(ctx context.Context, twin twins.Twin)) *TwinRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(twins.Twin))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 twins.Twin
+		if args[1] != nil {
+			arg1 = args[1].(twins.Twin)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
