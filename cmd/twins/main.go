@@ -199,7 +199,7 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config,
 
 	subCfg := messaging.SubscriberConfig{
 		ID:      id,
-		Topic:   brokers.SubjectAllChannels,
+		Topic:   brokers.SubjectAllMessages,
 		Handler: handle(ctx, logger, cfg.ChannelID, svc),
 	}
 	if err = ps.Subscribe(ctx, subCfg); err != nil {
