@@ -49,6 +49,7 @@ func TestPublish(t *testing.T) {
 	svc := newService()
 
 	msgBase64 := base64.StdEncoding.EncodeToString([]byte(msg))
+	chanVal := fmt.Sprintf("%s:%s", chanID, domainID)
 
 	cases := []struct {
 		desc           string
@@ -148,9 +149,9 @@ func TestPublish(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := clientsRM.On("Get", context.Background(), tc.msg.DeviceInfo.DevEUI).Return(tc.msg.DeviceInfo.DevEUI, tc.getClientErr)
-		repoCall1 := channelsRM.On("Get", context.Background(), tc.msg.DeviceInfo.ApplicationID).Return(tc.msg.DeviceInfo.ApplicationID, tc.getChannelErr)
+		repoCall1 := channelsRM.On("Get", context.Background(), tc.msg.DeviceInfo.ApplicationID).Return(chanVal, tc.getChannelErr)
 		repoCall2 := connsRM.On("Get", context.Background(), mock.Anything).Return("", tc.connectionsErr)
-		repoCall3 := pub.On("Publish", context.Background(), tc.msg.DeviceInfo.ApplicationID, mock.Anything).Return(tc.publishErr)
+		repoCall3 := pub.On("Publish", context.Background(), mock.Anything, mock.Anything).Return(tc.publishErr)
 		err := svc.Publish(context.Background(), &tc.msg)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
