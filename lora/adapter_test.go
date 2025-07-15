@@ -28,6 +28,7 @@ const (
 	appID2    = "appID-2"
 	msg       = `[{"bn":"msg-base-name","n":"temperature","v": 17},{"n":"humidity","v": 56}]`
 	invalid   = "wrong"
+	domainID  = "domainID-1"
 )
 
 var (
@@ -62,9 +63,11 @@ func TestPublish(t *testing.T) {
 			desc: "publish message with existing route-map and valid Data",
 			err:  nil,
 			msg: lora.Message{
-				ApplicationID: appID,
-				DevEUI:        devEUI,
-				Data:          msgBase64,
+				DeviceInfo: lora.DeviceInfo{
+					ApplicationID: appID,
+					DevEUI:        devEUI,
+				},
+				Data: msgBase64,
 			},
 			getClientErr:   nil,
 			getChannelErr:  nil,
@@ -75,9 +78,11 @@ func TestPublish(t *testing.T) {
 			desc: "publish message with existing route-map and invalid Data",
 			err:  lora.ErrMalformedMessage,
 			msg: lora.Message{
-				ApplicationID: appID,
-				DevEUI:        devEUI,
-				Data:          "wrong",
+				DeviceInfo: lora.DeviceInfo{
+					ApplicationID: appID,
+					DevEUI:        devEUI,
+				},
+				Data: "wrong",
 			},
 			getClientErr:   nil,
 			getChannelErr:  nil,
@@ -88,8 +93,10 @@ func TestPublish(t *testing.T) {
 			desc: "publish message with non existing appID route-map",
 			err:  lora.ErrNotFoundApp,
 			msg: lora.Message{
-				ApplicationID: "wrong",
-				DevEUI:        devEUI,
+				DeviceInfo: lora.DeviceInfo{
+					ApplicationID: "wrong",
+					DevEUI:        devEUI,
+				},
 			},
 			getChannelErr: lora.ErrNotFoundApp,
 		},
@@ -97,8 +104,10 @@ func TestPublish(t *testing.T) {
 			desc: "publish message with non existing devEUI route-map",
 			err:  lora.ErrNotFoundDev,
 			msg: lora.Message{
-				ApplicationID: appID,
-				DevEUI:        "wrong",
+				DeviceInfo: lora.DeviceInfo{
+					ApplicationID: appID,
+					DevEUI:        "wrong",
+				},
 			},
 			getClientErr: lora.ErrNotFoundDev,
 		},
@@ -106,8 +115,10 @@ func TestPublish(t *testing.T) {
 			desc: "publish message with non existing connection route-map",
 			err:  lora.ErrNotConnected,
 			msg: lora.Message{
-				ApplicationID: appID2,
-				DevEUI:        devEUI2,
+				DeviceInfo: lora.DeviceInfo{
+					ApplicationID: appID2,
+					DevEUI:        devEUI2,
+				},
 			},
 			connectionsErr: lora.ErrNotConnected,
 		},
@@ -115,27 +126,31 @@ func TestPublish(t *testing.T) {
 			desc: "publish message with wrong Object",
 			err:  errors.New("json: unsupported type: chan int"),
 			msg: lora.Message{
-				ApplicationID: appID2,
-				DevEUI:        devEUI2,
-				Object:        make(chan int),
+				DeviceInfo: lora.DeviceInfo{
+					ApplicationID: appID2,
+					DevEUI:        devEUI2,
+				},
+				Object: make(chan int),
 			},
 		},
 		{
 			desc: "publish message with valid Object",
 			err:  nil,
 			msg: lora.Message{
-				ApplicationID: appID2,
-				DevEUI:        devEUI2,
-				Object:        map[string]interface{}{"key": "value"},
+				DeviceInfo: lora.DeviceInfo{
+					ApplicationID: appID2,
+					DevEUI:        devEUI2,
+				},
+				Object: map[string]interface{}{"key": "value"},
 			},
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := clientsRM.On("Get", context.Background(), tc.msg.DevEUI).Return(tc.msg.DevEUI, tc.getClientErr)
-		repoCall1 := channelsRM.On("Get", context.Background(), tc.msg.ApplicationID).Return(tc.msg.ApplicationID, tc.getChannelErr)
+		repoCall := clientsRM.On("Get", context.Background(), tc.msg.DeviceInfo.DevEUI).Return(tc.msg.DeviceInfo.DevEUI, tc.getClientErr)
+		repoCall1 := channelsRM.On("Get", context.Background(), tc.msg.DeviceInfo.ApplicationID).Return(tc.msg.DeviceInfo.ApplicationID, tc.getChannelErr)
 		repoCall2 := connsRM.On("Get", context.Background(), mock.Anything).Return("", tc.connectionsErr)
-		repoCall3 := pub.On("Publish", context.Background(), tc.msg.ApplicationID, mock.Anything).Return(tc.publishErr)
+		repoCall3 := pub.On("Publish", context.Background(), tc.msg.DeviceInfo.ApplicationID, mock.Anything).Return(tc.publishErr)
 		err := svc.Publish(context.Background(), &tc.msg)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -149,34 +164,38 @@ func TestCreateChannel(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
-		desc   string
-		err    error
-		ChanID string
-		AppID  string
+		desc     string
+		err      error
+		chanID   string
+		domainID string
+		appID    string
 	}{
 		{
-			desc:   "create channel with valid data",
-			err:    nil,
-			ChanID: chanID,
-			AppID:  appID,
+			desc:     "create channel with valid data",
+			err:      nil,
+			chanID:   chanID,
+			domainID: domainID,
+			appID:    appID,
 		},
 		{
-			desc:   "create channel with empty chanID",
-			err:    lora.ErrNotFoundApp,
-			ChanID: "",
-			AppID:  appID,
+			desc:     "create channel with empty chanID and domainID",
+			err:      lora.ErrNotFoundApp,
+			chanID:   "",
+			domainID: "",
+			appID:    appID,
 		},
 		{
-			desc:   "create channel with empty appID",
-			err:    lora.ErrNotFoundApp,
-			ChanID: chanID,
-			AppID:  "",
+			desc:     "create channel with empty appID",
+			err:      lora.ErrNotFoundApp,
+			chanID:   chanID,
+			domainID: domainID,
+			appID:    "",
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := channelsRM.On("Save", context.Background(), tc.ChanID, tc.AppID).Return(tc.err)
-		err := svc.CreateChannel(context.Background(), tc.ChanID, tc.AppID)
+		repoCall := channelsRM.On("Save", context.Background(), tc.chanID+":"+tc.domainID, tc.appID).Return(tc.err)
+		err := svc.CreateChannel(context.Background(), tc.chanID, tc.domainID, tc.appID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}
@@ -227,6 +246,7 @@ func TestConnectClient(t *testing.T) {
 		err           error
 		channelID     string
 		clientID      string
+		domainID      string
 		getClientErr  error
 		getChannelErr error
 	}{
@@ -235,6 +255,7 @@ func TestConnectClient(t *testing.T) {
 			err:           nil,
 			channelID:     chanID,
 			clientID:      clientID,
+			domainID:      domainID,
 			getClientErr:  nil,
 			getChannelErr: nil,
 		},
@@ -243,6 +264,7 @@ func TestConnectClient(t *testing.T) {
 			err:          lora.ErrNotFoundDev,
 			channelID:    chanID,
 			clientID:     invalid,
+			domainID:     domainID,
 			getClientErr: lora.ErrNotFoundDev,
 		},
 		{
@@ -250,15 +272,16 @@ func TestConnectClient(t *testing.T) {
 			err:           lora.ErrNotFoundApp,
 			channelID:     invalid,
 			clientID:      clientID,
+			domainID:      domainID,
 			getChannelErr: lora.ErrNotFoundApp,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := clientsRM.On("Get", context.Background(), tc.clientID).Return(devEUI, tc.getClientErr)
-		repoCall1 := channelsRM.On("Get", context.Background(), tc.channelID).Return(appID, tc.getChannelErr)
+		repoCall1 := channelsRM.On("Get", context.Background(), tc.channelID+":"+tc.domainID).Return(appID, tc.getChannelErr)
 		repoCall2 := connsRM.On("Save", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.ConnectClient(context.Background(), tc.channelID, tc.clientID)
+		err := svc.ConnectClient(context.Background(), tc.channelID, tc.domainID, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -274,6 +297,7 @@ func TestDisconnectClient(t *testing.T) {
 		err           error
 		channelID     string
 		clientID      string
+		domainID      string
 		getClientErr  error
 		getChannelErr error
 	}{
@@ -282,6 +306,7 @@ func TestDisconnectClient(t *testing.T) {
 			err:           nil,
 			channelID:     chanID,
 			clientID:      clientID,
+			domainID:      domainID,
 			getClientErr:  nil,
 			getChannelErr: nil,
 		},
@@ -290,6 +315,7 @@ func TestDisconnectClient(t *testing.T) {
 			err:          lora.ErrNotFoundDev,
 			channelID:    chanID,
 			clientID:     invalid,
+			domainID:     domainID,
 			getClientErr: lora.ErrNotFoundDev,
 		},
 		{
@@ -297,15 +323,16 @@ func TestDisconnectClient(t *testing.T) {
 			err:           lora.ErrNotFoundApp,
 			channelID:     invalid,
 			clientID:      clientID,
+			domainID:      domainID,
 			getChannelErr: lora.ErrNotFoundApp,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := clientsRM.On("Get", context.Background(), tc.clientID).Return(devEUI, tc.getClientErr)
-		repoCall1 := channelsRM.On("Get", context.Background(), tc.channelID).Return(appID, tc.getChannelErr)
+		repoCall1 := channelsRM.On("Get", context.Background(), tc.channelID+":"+tc.domainID).Return(appID, tc.getChannelErr)
 		repoCall2 := connsRM.On("Remove", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.DisconnectClient(context.Background(), tc.channelID, tc.clientID)
+		err := svc.DisconnectClient(context.Background(), tc.channelID, tc.domainID, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -317,30 +344,40 @@ func TestRemoveChannel(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
-		desc   string
-		err    error
-		ChanID string
+		desc     string
+		err      error
+		chanID   string
+		domainID string
 	}{
 		{
-			desc:   "remove channel with valid data",
-			err:    nil,
-			ChanID: chanID,
+			desc:     "remove channel with valid data",
+			err:      nil,
+			chanID:   chanID,
+			domainID: domainID,
 		},
 		{
-			desc:   "remove channel with non existing channel",
-			err:    lora.ErrNotFoundApp,
-			ChanID: invalid,
+			desc:     "remove channel with non existing channel",
+			err:      lora.ErrNotFoundApp,
+			chanID:   invalid,
+			domainID: domainID,
 		},
 		{
-			desc:   "remove channel with empty channelID",
-			err:    lora.ErrNotFoundApp,
-			ChanID: "",
+			desc:     "remove channel with empty channelID",
+			err:      lora.ErrNotFoundApp,
+			chanID:   "",
+			domainID: domainID,
+		},
+		{
+			desc:     "remove channel with empty domainID",
+			err:      lora.ErrNotFoundApp,
+			chanID:   chanID,
+			domainID: "",
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := channelsRM.On("Remove", context.Background(), tc.ChanID).Return(tc.err)
-		err := svc.RemoveChannel(context.Background(), tc.ChanID)
+		repoCall := channelsRM.On("Remove", context.Background(), tc.chanID+":"+tc.domainID).Return(tc.err)
+		err := svc.RemoveChannel(context.Background(), tc.chanID, tc.domainID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}
@@ -383,46 +420,52 @@ func TestUpdateChannel(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
-		desc   string
-		err    error
-		ChanID string
-		AppID  string
+		desc     string
+		err      error
+		chanID   string
+		domainID string
+		appID    string
 	}{
 		{
-			desc:   "update channel with valid data",
-			err:    nil,
-			ChanID: chanID,
-			AppID:  appID,
+			desc:     "update channel with valid data",
+			err:      nil,
+			chanID:   chanID,
+			domainID: domainID,
+			appID:    appID,
 		},
 		{
-			desc:   "update channel with non existing channel",
-			err:    lora.ErrNotFoundApp,
-			ChanID: invalid,
-			AppID:  appID,
+			desc:     "update channel with non existing channel",
+			err:      lora.ErrNotFoundApp,
+			chanID:   invalid,
+			domainID: domainID,
+			appID:    appID,
 		},
 		{
-			desc:   "update channel with empty channelID",
-			err:    lora.ErrNotFoundApp,
-			ChanID: "",
-			AppID:  appID,
+			desc:     "update channel with empty channelID",
+			err:      lora.ErrNotFoundApp,
+			chanID:   "",
+			domainID: domainID,
+			appID:    appID,
 		},
 		{
-			desc:   "update channel with empty appID",
-			err:    lora.ErrNotFoundApp,
-			ChanID: chanID,
-			AppID:  "",
+			desc:     "update channel with empty appID",
+			err:      lora.ErrNotFoundApp,
+			chanID:   chanID,
+			domainID: domainID,
+			appID:    "",
 		},
 		{
-			desc:   "update channel with non existing appID",
-			err:    lora.ErrNotFoundApp,
-			ChanID: chanID,
-			AppID:  invalid,
+			desc:     "update channel with non existing appID",
+			err:      lora.ErrNotFoundApp,
+			chanID:   chanID,
+			domainID: domainID,
+			appID:    invalid,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := channelsRM.On("Save", context.Background(), tc.ChanID, tc.AppID).Return(tc.err)
-		err := svc.UpdateChannel(context.Background(), tc.ChanID, tc.AppID)
+		repoCall := channelsRM.On("Save", context.Background(), tc.chanID+":"+tc.domainID, tc.appID).Return(tc.err)
+		err := svc.UpdateChannel(context.Background(), tc.chanID, tc.domainID, tc.appID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}

@@ -13,15 +13,18 @@ type removeClientEvent struct {
 }
 
 type createChannelEvent struct {
-	id        string
+	channelID string
 	loraAppID string
+	domainID  string
 }
 
 type removeChannelEvent struct {
-	id string
+	channelID string
+	domainID  string
 }
 
 type connectionEvent struct {
 	chanIDs   []string
 	clientIDs []string
+	domainID  string
 }

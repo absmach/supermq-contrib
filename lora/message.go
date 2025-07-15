@@ -5,43 +5,47 @@ package lora
 
 // RxInfo receiver parameters.
 type RxInfo []struct {
-	Mac       string  `json:"mac"`
-	Name      string  `json:"name"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Altitude  float64 `json:"altitude"`
-	Time      string  `json:"time"`
-	Rssi      float64 `json:"rssi"`
-	LoRaSNR   float64 `json:"loRaSNR"`
-}
-
-// DataRate lora data rate.
-type DataRate struct {
-	Modulation   string  `json:"modulation"`
-	Bandwidth    float64 `json:"bandwidth"`
-	SpreadFactor int64   `json:"spreadFactor"`
+	GatewayID string            `json:"gatewayId"`
+	UplinkID  uint64            `json:"uplinkId"`
+	Context   string            `json:"context"`
+	Rssi      float64           `json:"rssi"`
+	Snr       float64           `json:"snr"`
+	Metadata  map[string]string `json:"metadata"`
 }
 
 // TxInfo transmeter parameters.
 type TxInfo struct {
-	Frequency float64  `json:"frequency"`
-	DataRate  DataRate `json:"dataRate"`
-	Adr       bool     `json:"adr"`
-	CodeRate  string   `json:"codeRate"`
+	Frequency  float64                `json:"frequency"`
+	Modulation map[string]interface{} `json:"modulation"`
 }
 
-// Message lora msg (https://www.chirpstack.io/application-server/integrations/events).
+type DeviceInfo struct {
+	TenantID           string            `json:"tenantId"`
+	TenantName         string            `json:"tenantName"`
+	ApplicationID      string            `json:"applicationId"`
+	ApplicationName    string            `json:"applicationName"`
+	DeviceProfileID    string            `json:"deviceProfileId"`
+	DeviceProfileName  string            `json:"deviceProfileName"`
+	DeviceName         string            `json:"deviceName"`
+	DevEUI             string            `json:"devEui"`
+	DeviceClassEnabled string            `json:"deviceClassEnabled"`
+	Tags               map[string]string `json:"tags"`
+}
+
+// Message lora msg (https://www.chirpstack.io/docs/chirpstack/integrations/events.html).
 type Message struct {
-	ApplicationID       string      `json:"applicationID"`
-	ApplicationName     string      `json:"applicationName"`
-	DeviceName          string      `json:"deviceName"`
-	DevEUI              string      `json:"devEUI"`
-	DeviceStatusBattery string      `json:"deviceStatusBattery"`
-	DeviceStatusMrgin   string      `json:"deviceStatusMargin"`
-	RxInfo              RxInfo      `json:"rxInfo"`
-	TxInfo              TxInfo      `json:"txInfo"`
-	FCnt                int         `json:"fCnt"`
-	FPort               int         `json:"fPort"`
-	Data                string      `json:"data"`
-	Object              interface{} `json:"object"`
+	DeduplicationID string     `json:"deduplicationId"`
+	Time            string     `json:"time"`
+	DeviceInfo      DeviceInfo `json:"deviceInfo"`
+	DevAddr         string     `json:"devAddr"`
+	Adr             bool       `json:"adr"`
+	Dr              int        `json:"dr"`
+	FCnt            int        `json:"fCnt"`
+	FPort           int        `json:"fPort"`
+	Confirmed       bool       `json:"confirmed"`
+	Data            string     `json:"data"`
+	RxInfo          RxInfo     `json:"rxInfo"`
+	TxInfo          TxInfo     `json:"txInfo"`
+	RegionConfigID  string     `json:"regionConfigId"`
+	Object          any        `json:"object"`
 }

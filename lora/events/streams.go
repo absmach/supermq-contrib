@@ -34,7 +34,7 @@ var (
 
 	errMetadataFormat = errors.New("malformed metadata")
 
-	errMetadataAppID = errors.New("application ID not found in channel metadatada")
+	errMetadataAppID = errors.New("application ID not found in channel metadata")
 
 	errMetadataDevEUI = errors.New("device EUI not found in client metadatada")
 )
@@ -70,19 +70,19 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 			err = derr
 			break
 		}
-		err = es.svc.CreateChannel(ctx, cce.id, cce.loraAppID)
+		err = es.svc.CreateChannel(ctx, cce.channelID, cce.domainID, cce.loraAppID)
 	case clientRemove:
 		rte := decodeRemoveClient(msg)
 		err = es.svc.RemoveClient(ctx, rte.id)
 	case channelRemove:
 		rce := decodeRemoveChannel(msg)
-		err = es.svc.RemoveChannel(ctx, rce.id)
+		err = es.svc.RemoveChannel(ctx, rce.channelID, rce.domainID)
 	case channelConnect:
 		tce := decodeConnection(msg)
 
 		for _, chanID := range tce.chanIDs {
 			for _, clientID := range tce.clientIDs {
-				err = es.svc.ConnectClient(ctx, chanID, clientID)
+				err = es.svc.ConnectClient(ctx, chanID, tce.domainID, clientID)
 				if err != nil {
 					return err
 				}
@@ -93,7 +93,7 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 
 		for _, chanID := range tde.chanIDs {
 			for _, clientID := range tde.clientIDs {
-				err = es.svc.DisconnectClient(ctx, chanID, clientID)
+				err = es.svc.DisconnectClient(ctx, chanID, tde.domainID, clientID)
 				if err != nil {
 					return err
 				}
@@ -143,7 +143,8 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 	metadata := events.Read(event, "metadata", map[string]interface{}{})
 
 	cce := createChannelEvent{
-		id: events.Read(event, "id", ""),
+		channelID: events.Read(event, "id", ""),
+		domainID:  events.Read(event, "domain", ""),
 	}
 
 	m, ok := metadata[keyType]
@@ -169,11 +170,13 @@ func decodeConnection(event map[string]interface{}) connectionEvent {
 	return connectionEvent{
 		chanIDs:   events.ReadStringSlice(event, "channel_ids"),
 		clientIDs: events.ReadStringSlice(event, "client_ids"),
+		domainID:  events.Read(event, "domain", ""),
 	}
 }
 
 func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 	return removeChannelEvent{
-		id: events.Read(event, "id", ""),
+		channelID: events.Read(event, "id", ""),
+		domainID:  events.Read(event, "domain", ""),
 	}
 }

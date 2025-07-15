@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/absmach/supermq/pkg/messaging"
@@ -28,6 +29,9 @@ var (
 
 	// ErrNotConnected indicates a non-existent route map for a connection.
 	ErrNotConnected = errors.New("route map not found for this connection")
+
+	// ErrMalformedChannelValue indicates a malformed channel value format.
+	ErrMalformedChannelValue = errors.New("malformed channel value format")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -43,19 +47,19 @@ type Service interface {
 	RemoveClient(ctx context.Context, clientID string) error
 
 	// CreateChannel creates channelID:appID route-map
-	CreateChannel(ctx context.Context, chanID, appID string) error
+	CreateChannel(ctx context.Context, chanID, domainID, appID string) error
 
 	// UpdateChannel updates channelID:appID route-map
-	UpdateChannel(ctx context.Context, chanID, appID string) error
+	UpdateChannel(ctx context.Context, chanID, domainID, appID string) error
 
 	// RemoveChannel removes channelID:appID route-map
-	RemoveChannel(ctx context.Context, chanID string) error
+	RemoveChannel(ctx context.Context, chanID, domainID string) error
 
 	// ConnectClient creates clientID:channelID route-map
-	ConnectClient(ctx context.Context, chanID, clientID string) error
+	ConnectClient(ctx context.Context, chanID, domainID, clientID string) error
 
 	// DisconnectClient removes clientID:channelID route-map
-	DisconnectClient(ctx context.Context, chanID, clientID string) error
+	DisconnectClient(ctx context.Context, chanID, domainID, clientID string) error
 
 	// Publish forwards messages from the LoRa MQTT broker to SupeMQ Message Broker
 	Publish(ctx context.Context, msg *Message) error
@@ -83,15 +87,19 @@ func New(publisher messaging.Publisher, clientsRM, channelsRM, connectRM RouteMa
 // Publish forwards messages from Lora MQTT broker to SupeMQ Message broker.
 func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 	// Get route map of lora application
-	clientID, err := as.clientsRM.Get(ctx, m.DevEUI)
+	clientID, err := as.clientsRM.Get(ctx, m.DeviceInfo.DevEUI)
 	if err != nil {
 		return ErrNotFoundDev
 	}
 
 	// Get route map of lora application
-	chanID, err := as.channelsRM.Get(ctx, m.ApplicationID)
+	chanVal, err := as.channelsRM.Get(ctx, m.DeviceInfo.ApplicationID)
 	if err != nil {
 		return ErrNotFoundApp
+	}
+	chanID, domainID, err := decodeChannelValue(chanVal)
+	if err != nil {
+		return err
 	}
 
 	c := fmt.Sprintf("%s:%s", chanID, clientID)
@@ -121,11 +129,12 @@ func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 		Publisher: clientID,
 		Protocol:  protocol,
 		Channel:   chanID,
+		Domain:    domainID,
 		Payload:   payload,
 		Created:   time.Now().UnixNano(),
 	}
 
-	return as.publisher.Publish(ctx, msg.Channel, &msg)
+	return as.publisher.Publish(ctx, messaging.EncodeMessageTopic(&msg), &msg)
 }
 
 func (as *adapterService) CreateClient(ctx context.Context, clientID, devEUI string) error {
@@ -140,20 +149,24 @@ func (as *adapterService) RemoveClient(ctx context.Context, clientID string) err
 	return as.clientsRM.Remove(ctx, clientID)
 }
 
-func (as *adapterService) CreateChannel(ctx context.Context, chanID, appID string) error {
-	return as.channelsRM.Save(ctx, chanID, appID)
+func (as *adapterService) CreateChannel(ctx context.Context, chanID, domainID, appID string) error {
+	val := fmt.Sprintf("%s:%s", chanID, domainID)
+	return as.channelsRM.Save(ctx, val, appID)
 }
 
-func (as *adapterService) UpdateChannel(ctx context.Context, chanID, appID string) error {
-	return as.channelsRM.Save(ctx, chanID, appID)
+func (as *adapterService) UpdateChannel(ctx context.Context, chanID, domainID, appID string) error {
+	val := fmt.Sprintf("%s:%s", chanID, domainID)
+	return as.channelsRM.Save(ctx, val, appID)
 }
 
-func (as *adapterService) RemoveChannel(ctx context.Context, chanID string) error {
-	return as.channelsRM.Remove(ctx, chanID)
+func (as *adapterService) RemoveChannel(ctx context.Context, chanID, domainID string) error {
+	val := fmt.Sprintf("%s:%s", chanID, domainID)
+	return as.channelsRM.Remove(ctx, val)
 }
 
-func (as *adapterService) ConnectClient(ctx context.Context, chanID, clientID string) error {
-	if _, err := as.channelsRM.Get(ctx, chanID); err != nil {
+func (as *adapterService) ConnectClient(ctx context.Context, chanID, domainID, clientID string) error {
+	val := fmt.Sprintf("%s:%s", chanID, domainID)
+	if _, err := as.channelsRM.Get(ctx, val); err != nil {
 		return ErrNotFoundApp
 	}
 
@@ -165,8 +178,9 @@ func (as *adapterService) ConnectClient(ctx context.Context, chanID, clientID st
 	return as.connectRM.Save(ctx, c, c)
 }
 
-func (as *adapterService) DisconnectClient(ctx context.Context, chanID, clientID string) error {
-	if _, err := as.channelsRM.Get(ctx, chanID); err != nil {
+func (as *adapterService) DisconnectClient(ctx context.Context, chanID, domainID, clientID string) error {
+	val := fmt.Sprintf("%s:%s", chanID, domainID)
+	if _, err := as.channelsRM.Get(ctx, val); err != nil {
 		return ErrNotFoundApp
 	}
 
@@ -176,4 +190,12 @@ func (as *adapterService) DisconnectClient(ctx context.Context, chanID, clientID
 
 	c := fmt.Sprintf("%s:%s", chanID, clientID)
 	return as.connectRM.Remove(ctx, c)
+}
+
+func decodeChannelValue(val string) (chanID, domainID string, err error) {
+	parts := strings.Split(val, ":")
+	if len(parts) != 2 {
+		return "", "", ErrMalformedChannelValue
+	}
+	return parts[0], parts[1], nil
 }

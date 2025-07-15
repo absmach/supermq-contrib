@@ -57,49 +57,49 @@ func (mm *metricsMiddleware) RemoveClient(ctx context.Context, clientID string) 
 	return mm.svc.RemoveClient(ctx, clientID)
 }
 
-func (mm *metricsMiddleware) CreateChannel(ctx context.Context, chanID, loraApp string) error {
+func (mm *metricsMiddleware) CreateChannel(ctx context.Context, chanID, domainID, loraApp string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_channel").Add(1)
 		mm.latency.With("method", "create_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateChannel(ctx, chanID, loraApp)
+	return mm.svc.CreateChannel(ctx, chanID, domainID, loraApp)
 }
 
-func (mm *metricsMiddleware) UpdateChannel(ctx context.Context, chanID, loraApp string) error {
+func (mm *metricsMiddleware) UpdateChannel(ctx context.Context, chanID, domainID, loraApp string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_channel").Add(1)
 		mm.latency.With("method", "update_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateChannel(ctx, chanID, loraApp)
+	return mm.svc.UpdateChannel(ctx, chanID, domainID, loraApp)
 }
 
-func (mm *metricsMiddleware) RemoveChannel(ctx context.Context, chanID string) error {
+func (mm *metricsMiddleware) RemoveChannel(ctx context.Context, chanID, domainID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove_channel").Add(1)
 		mm.latency.With("method", "remove_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.RemoveChannel(ctx, chanID)
+	return mm.svc.RemoveChannel(ctx, chanID, domainID)
 }
 
-func (mm *metricsMiddleware) ConnectClient(ctx context.Context, chanID, clientID string) error {
+func (mm *metricsMiddleware) ConnectClient(ctx context.Context, chanID, domainID, clientID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "connect_client").Add(1)
 		mm.latency.With("method", "connect_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ConnectClient(ctx, chanID, clientID)
+	return mm.svc.ConnectClient(ctx, chanID, domainID, clientID)
 }
 
-func (mm *metricsMiddleware) DisconnectClient(ctx context.Context, chanID, clientID string) error {
+func (mm *metricsMiddleware) DisconnectClient(ctx context.Context, chanID, domainID, clientID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "disconnect_client").Add(1)
 		mm.latency.With("method", "disconnect_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.DisconnectClient(ctx, chanID, clientID)
+	return mm.svc.DisconnectClient(ctx, chanID, domainID, clientID)
 }
 
 func (mm *metricsMiddleware) Publish(ctx context.Context, msg *lora.Message) error {
