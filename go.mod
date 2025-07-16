@@ -29,7 +29,7 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rubenv/sql-migrate v1.8.0
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/viper v1.19.0
+	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
@@ -75,17 +75,14 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
-	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
-	github.com/magiconair/properties v1.8.9 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
@@ -108,7 +105,6 @@ require (
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/redis/go-redis/v9 v9.11.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
-	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
@@ -134,7 +130,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
@@ -144,7 +139,6 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl v1.0.0 // indirect
