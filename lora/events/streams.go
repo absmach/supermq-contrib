@@ -16,17 +16,17 @@ const (
 	keyDevEUI = "dev_eui"
 	keyAppID  = "app_id"
 
-	clientPrefix     = "client."
-	clientCreate     = clientPrefix + "create"
-	clientUpdate     = clientPrefix + "update"
-	clientRemove     = clientPrefix + "remove"
-	clientConnect    = clientPrefix + "connect"
-	clientDisconnect = clientPrefix + "disconnect"
+	clientPrefix = "client."
+	clientCreate = clientPrefix + "create"
+	clientUpdate = clientPrefix + "update"
+	clientRemove = clientPrefix + "remove"
 
-	channelPrefix = "group."
-	channelCreate = channelPrefix + "create"
-	channelUpdate = channelPrefix + "update"
-	channelRemove = channelPrefix + "remove"
+	channelPrefix     = "channel."
+	channelCreate     = channelPrefix + "create"
+	channelUpdate     = channelPrefix + "update"
+	channelRemove     = channelPrefix + "remove"
+	channelConnect    = channelPrefix + "connect"
+	channelDisconnect = channelPrefix + "disconnect"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 
 	errMetadataFormat = errors.New("malformed metadata")
 
-	errMetadataAppID = errors.New("application ID not found in channel metadatada")
+	errMetadataAppID = errors.New("application ID not found in channel metadata")
 
 	errMetadataDevEUI = errors.New("device EUI not found in client metadatada")
 )
@@ -70,29 +70,33 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 			err = derr
 			break
 		}
-		err = es.svc.CreateChannel(ctx, cce.id, cce.loraAppID)
+		err = es.svc.CreateChannel(ctx, cce.channelID, cce.domainID, cce.loraAppID)
 	case clientRemove:
 		rte := decodeRemoveClient(msg)
 		err = es.svc.RemoveClient(ctx, rte.id)
 	case channelRemove:
 		rce := decodeRemoveChannel(msg)
-		err = es.svc.RemoveChannel(ctx, rce.id)
-	case clientConnect:
-		tce := decodeConnectionClient(msg)
+		err = es.svc.RemoveChannel(ctx, rce.channelID, rce.domainID)
+	case channelConnect:
+		tce := decodeConnection(msg)
 
-		for _, clientID := range tce.clientIDs {
-			err = es.svc.ConnectClient(ctx, tce.chanID, clientID)
-			if err != nil {
-				return err
+		for _, chanID := range tce.chanIDs {
+			for _, clientID := range tce.clientIDs {
+				err = es.svc.ConnectClient(ctx, chanID, tce.domainID, clientID)
+				if err != nil {
+					return err
+				}
 			}
 		}
-	case clientDisconnect:
-		tde := decodeConnectionClient(msg)
+	case channelDisconnect:
+		tde := decodeConnection(msg)
 
-		for _, clientID := range tde.clientIDs {
-			err = es.svc.DisconnectClient(ctx, tde.chanID, clientID)
-			if err != nil {
-				return err
+		for _, chanID := range tde.chanIDs {
+			for _, clientID := range tde.clientIDs {
+				err = es.svc.DisconnectClient(ctx, chanID, tde.domainID, clientID)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -139,7 +143,8 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 	metadata := events.Read(event, "metadata", map[string]interface{}{})
 
 	cce := createChannelEvent{
-		id: events.Read(event, "id", ""),
+		channelID: events.Read(event, "id", ""),
+		domainID:  events.Read(event, "domain", ""),
 	}
 
 	m, ok := metadata[keyType]
@@ -161,15 +166,17 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 	return cce, nil
 }
 
-func decodeConnectionClient(event map[string]interface{}) connectionClientEvent {
-	return connectionClientEvent{
-		chanID:    events.Read(event, "group_id", ""),
-		clientIDs: events.ReadStringSlice(event, "member_ids"),
+func decodeConnection(event map[string]interface{}) connectionEvent {
+	return connectionEvent{
+		chanIDs:   events.ReadStringSlice(event, "channel_ids"),
+		clientIDs: events.ReadStringSlice(event, "client_ids"),
+		domainID:  events.Read(event, "domain", ""),
 	}
 }
 
 func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 	return removeChannelEvent{
-		id: events.Read(event, "id", ""),
+		channelID: events.Read(event, "id", ""),
+		domainID:  events.Read(event, "domain", ""),
 	}
 }

@@ -1,15 +1,27 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-with-expecter: true
-filename: "{{.InterfaceName}}.go"
-outpkg: "mocks"
-boilerplate-file: "./tools/config/boilerplate.txt"
+pkgname: mocks
+structname: "{{.InterfaceName}}"
+filename: "{{snakecase .InterfaceName}}.go"
+dir: "{{.InterfaceDirRelative}}/mocks"
+template-data:
+  boilerplate-file: ./tools/config/boilerplate.txt
+force-file-write: true
+
 packages:
-  github.com/absmach/supermq:
+  github.com/absmach/supermq-contrib/consumers/notifiers:
     interfaces:
-      AuthServiceClient:
-        config:
-          dir: "./auth/mocks"
-          mockname: "AuthClient"
-          filename: "auth_client.go"
+      SubscriptionsRepository:
+      Service:
+
+  github.com/absmach/supermq-contrib/lora:
+    interfaces:
+      RouteMapRepository:
+
+  github.com/absmach/supermq-contrib/twins:
+    interfaces:
+      TwinRepository:
+      TwinCache:
+      Service:
+      StateRepository:

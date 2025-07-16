@@ -25,8 +25,6 @@ type StatesPage struct {
 }
 
 // StateRepository specifies a state persistence API.
-//
-//go:generate mockery --name StateRepository --output=./mocks --filename states.go --quiet --note "Copyright (c) Abstract Machines"
 type StateRepository interface {
 	// Save persists the state
 	Save(ctx context.Context, state State) error

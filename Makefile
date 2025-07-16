@@ -22,17 +22,17 @@ DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | tr -c -s '[:aln
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
-MOCKERY_VERSION=v2.43.2
+MOCKERY_VERSION=v3.5.0
 ifneq ($(SMQ_MESSAGE_BROKER_TYPE),)
-    SMQ_MESSAGE_BROKER_TYPE := $(SMQ_MESSAGE_BROKER_TYPE)
+	SMQ_MESSAGE_BROKER_TYPE := $(SMQ_MESSAGE_BROKER_TYPE)
 else
-    SMQ_MESSAGE_BROKER_TYPE=nats
+	SMQ_MESSAGE_BROKER_TYPE=msg_nats
 endif
 
 ifneq ($(SMQ_ES_TYPE),)
-    SMQ_ES_TYPE := $(SMQ_ES_TYPE)
+	SMQ_ES_TYPE := $(SMQ_ES_TYPE)
 else
-    SMQ_ES_TYPE=nats
+	SMQ_ES_TYPE=es_nats
 endif
 
 define compile_service
@@ -97,8 +97,8 @@ install:
 	done
 
 mocks:
-	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
-	@unset MOCKERY_VERSION && go generate ./...
+	@which mockery > /dev/null || go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION)
+	@unset MOCKERY_VERSION 
 	mockery --config ./tools/config/mockery.yaml
 
 DIRS = consumers readers opcua twins lora

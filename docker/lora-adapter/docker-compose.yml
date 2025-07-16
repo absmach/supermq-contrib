@@ -8,6 +8,7 @@
 
 networks:
   supermq-base-net:
+    external: true
 
 services:
   lora-redis:

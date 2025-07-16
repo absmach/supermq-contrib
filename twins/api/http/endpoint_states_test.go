@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/absmach/senml"
-	"github.com/absmach/supermq"
 	"github.com/absmach/supermq-contrib/pkg/testsutil"
 	"github.com/absmach/supermq-contrib/twins"
 	"github.com/absmach/supermq-contrib/twins/mocks"
-	authmocks "github.com/absmach/supermq/auth/mocks"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -47,8 +47,8 @@ type statesPageRes struct {
 	States []stateRes `json:"states"`
 }
 
-func NewService() (twins.Service, *authmocks.AuthClient, *mocks.TwinRepository, *mocks.TwinCache, *mocks.StateRepository) {
-	auth := new(authmocks.AuthClient)
+func NewService() (twins.Service, *authnmocks.Authentication, *mocks.TwinRepository, *mocks.TwinCache, *mocks.StateRepository) {
+	auth := new(authnmocks.Authentication)
 	twinsRepo := new(mocks.TwinRepository)
 	twinCache := new(mocks.TwinCache)
 	statesRepo := new(mocks.StateRepository)
@@ -82,15 +82,15 @@ func TestListStates(t *testing.T) {
 	baseURL := fmt.Sprintf("%s/states/%s", ts.URL, twin.ID)
 	queryFmt := "%s?offset=%d&limit=%d"
 	cases := []struct {
-		desc        string
-		token       string
-		status      int
-		url         string
-		res         []stateRes
-		err         error
-		page        twins.StatesPage
-		identifyErr error
-		userID      string
+		desc            string
+		token           string
+		status          int
+		url             string
+		res             []stateRes
+		err             error
+		page            twins.StatesPage
+		authenticateErr error
+		userID          string
 	}{
 		{
 			desc:   "get a list of states",
@@ -102,8 +102,8 @@ func TestListStates(t *testing.T) {
 			page: twins.StatesPage{
 				States: convState(data[0:10]),
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of states with valid offset and limit",
@@ -114,27 +114,27 @@ func TestListStates(t *testing.T) {
 			page: twins.StatesPage{
 				States: convState(data[20:35]),
 			},
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with invalid token",
-			token:       invalidToken,
-			status:      http.StatusUnauthorized,
-			url:         fmt.Sprintf(queryFmt, baseURL, 0, 5),
-			res:         nil,
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "get a list of states with invalid token",
+			token:           invalidToken,
+			status:          http.StatusUnauthorized,
+			url:             fmt.Sprintf(queryFmt, baseURL, 0, 5),
+			res:             nil,
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "get a list of states with empty token",
-			token:       "",
-			status:      http.StatusUnauthorized,
-			url:         fmt.Sprintf(queryFmt, baseURL, 0, 5),
-			res:         nil,
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "get a list of states with empty token",
+			token:           "",
+			status:          http.StatusUnauthorized,
+			url:             fmt.Sprintf(queryFmt, baseURL, 0, 5),
+			res:             nil,
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "get a list of states with + limit > total",
@@ -145,69 +145,69 @@ func TestListStates(t *testing.T) {
 			page: twins.StatesPage{
 				States: convState(data[91:]),
 			},
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with negative offset",
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf(queryFmt, baseURL, -1, 5),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of states with negative offset",
+			token:           validToken,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf(queryFmt, baseURL, -1, 5),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with negative limit",
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf(queryFmt, baseURL, 0, -5),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of states with negative limit",
+			token:           validToken,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf(queryFmt, baseURL, 0, -5),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with zero limit",
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf(queryFmt, baseURL, 0, 0),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of states with zero limit",
+			token:           validToken,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf(queryFmt, baseURL, 0, 0),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with limit greater than max",
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf(queryFmt, baseURL, 0, 110),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of states with limit greater than max",
+			token:           validToken,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf(queryFmt, baseURL, 0, 110),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with invalid offset",
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s?offset=invalid&limit=%d", baseURL, 15),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of states with invalid offset",
+			token:           validToken,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s?offset=invalid&limit=%d", baseURL, 15),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with invalid limit",
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s?offset=%d&limit=invalid", baseURL, 0),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of states with invalid limit",
+			token:           validToken,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s?offset=%d&limit=invalid", baseURL, 0),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of states without offset",
@@ -218,9 +218,9 @@ func TestListStates(t *testing.T) {
 			page: twins.StatesPage{
 				States: convState(data[0:15]),
 			},
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of states without limit",
@@ -231,19 +231,19 @@ func TestListStates(t *testing.T) {
 			page: twins.StatesPage{
 				States: convState(data[14:24]),
 			},
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "get a list of states with invalid number of parameters",
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			url:         fmt.Sprintf("%s%s", baseURL, "?offset=4&limit=4&limit=5&offset=5"),
-			res:         nil,
-			err:         svcerr.ErrMalformedEntity,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "get a list of states with invalid number of parameters",
+			token:           validToken,
+			status:          http.StatusBadRequest,
+			url:             fmt.Sprintf("%s%s", baseURL, "?offset=4&limit=4&limit=5&offset=5"),
+			res:             nil,
+			err:             svcerr.ErrMalformedEntity,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:   "get a list of states with redundant query parameters",
@@ -254,14 +254,14 @@ func TestListStates(t *testing.T) {
 			page: twins.StatesPage{
 				States: convState(data[0:5]),
 			},
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &supermq.IdentityReq{Token: tc.token}).Return(&supermq.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(smqauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall := stateRepo.On("RetrieveAll", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.err)
 		req := testRequest{
 			client: ts.Client(),

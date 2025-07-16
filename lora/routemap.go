@@ -6,8 +6,6 @@ package lora
 import "context"
 
 // RouteMapRepository store route map between Lora App Server and SupeMQ.
-//
-//go:generate mockery --name RouteMapRepository --output=./mocks --filename routes.go --quiet --note "Copyright (c) Abstract Machines"
 type RouteMapRepository interface {
 	// Save stores/routes pair lora application topic & supermq channel.
 	Save(context.Context, string, string) error

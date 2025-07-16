@@ -24,7 +24,7 @@ type eventStore struct {
 // NewEventStoreMiddleware returns wrapper around clients service that sends
 // events to event store.
 func NewEventStoreMiddleware(ctx context.Context, svc twins.Service, url string) (twins.Service, error) {
-	publisher, err := store.NewPublisher(ctx, url, streamID)
+	publisher, err := store.NewPublisher(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (es eventStore) AddTwin(ctx context.Context, token string, twin twins.Twin,
 		twin, def,
 	}
 
-	if err := es.Publish(ctx, event); err != nil {
+	if err := es.Publish(ctx, streamID, event); err != nil {
 		return twin, err
 	}
 
@@ -61,7 +61,7 @@ func (es eventStore) UpdateTwin(ctx context.Context, token string, twin twins.Tw
 		twin, def,
 	}
 
-	if err := es.Publish(ctx, event); err != nil {
+	if err := es.Publish(ctx, streamID, event); err != nil {
 		return err
 	}
 
@@ -78,7 +78,7 @@ func (es eventStore) ViewTwin(ctx context.Context, token, id string) (twins.Twin
 		id,
 	}
 
-	if err := es.Publish(ctx, event); err != nil {
+	if err := es.Publish(ctx, streamID, event); err != nil {
 		return twin, err
 	}
 
@@ -94,7 +94,7 @@ func (es eventStore) RemoveTwin(ctx context.Context, token, id string) error {
 		id,
 	}
 
-	if err := es.Publish(ctx, event); err != nil {
+	if err := es.Publish(ctx, streamID, event); err != nil {
 		return err
 	}
 
@@ -113,7 +113,7 @@ func (es eventStore) ListTwins(ctx context.Context, token string, offset, limit 
 		metadata,
 	}
 
-	if err := es.Publish(ctx, event); err != nil {
+	if err := es.Publish(ctx, streamID, event); err != nil {
 		return tp, err
 	}
 
@@ -132,7 +132,7 @@ func (es eventStore) ListStates(ctx context.Context, token string, offset, limit
 		id,
 	}
 
-	if err := es.Publish(ctx, event); err != nil {
+	if err := es.Publish(ctx, streamID, event); err != nil {
 		return sp, err
 	}
 
@@ -147,7 +147,7 @@ func (es eventStore) SaveStates(ctx context.Context, msg *messaging.Message) err
 		msg,
 	}
 
-	if err := es.Publish(ctx, event); err != nil {
+	if err := es.Publish(ctx, streamID, event); err != nil {
 		return err
 	}
 

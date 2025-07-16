@@ -11,15 +11,12 @@ import (
 	"log/slog"
 	"os"
 
-	cassandraclient "github.com/absmach/supermq-contrib/pkg/clients/cassandra"
-	"github.com/absmach/supermq-contrib/readers/api"
-	"github.com/absmach/supermq-contrib/readers/cassandra"
-
-	"github.com/gocql/gocql"
-
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/supermq"
+	cassandraclient "github.com/absmach/supermq-contrib/pkg/clients/cassandra"
+	"github.com/absmach/supermq-contrib/readers/api"
 	httpapi "github.com/absmach/supermq-contrib/readers/api"
+	"github.com/absmach/supermq-contrib/readers/cassandra"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	"github.com/absmach/supermq/pkg/grpcclient"
@@ -29,6 +26,7 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/absmach/supermq/readers"
 	"github.com/caarlos0/env/v11"
+	"github.com/gocql/gocql"
 	"golang.org/x/sync/errgroup"
 )
 

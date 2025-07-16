@@ -416,7 +416,7 @@ components:
       content:
         application/health+json:
           schema:
-            $ref: "./schemas/HealthInfo.yml"
+             $ref: "./schemas/health_info.yaml"
 
   securitySchemes:
     bearerAuth:
